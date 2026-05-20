@@ -1197,6 +1197,23 @@ function _exposeAll() {
 
 function _boot() {
   _exposeAll();
+
+  // Event delegation for book cards (avoids inline onclick quoting issues)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-book-id]');
+    if (!card) return;
+    const id = parseInt(card.getAttribute('data-book-id'), 10);
+    const action = btn.getAttribute('data-action');
+    if (action === 'status') {
+      const status = btn.getAttribute('data-status');
+      setBookStatus(id, status);
+    } else if (action === 'delete') {
+      deleteBook(id);
+    }
+  });
+
   updateStreak();
   initDOM();
 }
@@ -1267,16 +1284,19 @@ function renderBooks() {
 function bookCardHTML(b) {
   const statusLabels = { reading: 'Reading now', done: 'Finished', want: 'Want to read' };
   const statusClass  = { reading: 'reading', done: 'done', want: 'want' };
-  return '<div class="book-card">' +
-    '<div class="book-status ' + statusClass[b.status] + '">' + statusLabels[b.status] + '</div>' +
+  const sid = b.id;
+  const sc2 = statusClass[b.status] || '';
+  const sl  = statusLabels[b.status] || '';
+  return '<div class="book-card" data-book-id="' + sid + '">' +
+    '<div class="book-status ' + sc2 + '">' + sl + '</div>' +
     '<div class="book-title">' + es(b.title) + '</div>' +
     (b.author ? '<div class="book-author">' + es(b.author) + '</div>' : '') +
     (b.note   ? '<div class="book-note">'   + es(b.note)   + '</div>' : '') +
     '<div class="book-actions">' +
-    (b.status !== 'reading' ? '<button class="btag-btn" onclick="setBookStatus(' + b.id + ','reading')">Reading</button>' : '<button class="btag-btn active-reading" onclick="setBookStatus(' + b.id + ','reading')">Reading</button>') +
-    (b.status !== 'done'    ? '<button class="btag-btn" onclick="setBookStatus(' + b.id + ','done')">Done</button>'       : '<button class="btag-btn active-done"    onclick="setBookStatus(' + b.id + ','done')">Done ✓</button>') +
-    (b.status !== 'want'    ? '<button class="btag-btn" onclick="setBookStatus(' + b.id + ','want')">Want</button>'       : '') +
-    '<button class="btag-btn" onclick="deleteBook(' + b.id + ')" style="color:var(--t2)">Remove</button>' +
+    (b.status !== 'reading' ? '<button class="btag-btn" data-action="status" data-status="reading">Reading</button>' : '<button class="btag-btn active-reading" data-action="status" data-status="reading">Reading ✓</button>') +
+    (b.status !== 'done'    ? '<button class="btag-btn" data-action="status" data-status="done">Done</button>'       : '<button class="btag-btn active-done" data-action="status" data-status="done">Done ✓</button>') +
+    (b.status !== 'want'    ? '<button class="btag-btn" data-action="status" data-status="want">Want</button>'       : '') +
+    '<button class="btag-btn" data-action="delete" style="color:var(--t2)">Remove</button>' +
     '</div></div>';
 }
 
