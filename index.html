@@ -675,7 +675,7 @@ body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-w
 </div><!-- /shell -->
 
 <script>
-const WORKER_URL = 'https://growcoach-proxy.cisvdh2001.workers.dev/';
+const WORKER_URL = 'https://growcoach-proxy.cisvdh2001.workers.dev';
 
 // ── System prompt builder ─────────────────────────────────────
 function buildSystem(p) {
@@ -1082,7 +1082,11 @@ async function sc() {
     extractAndUpdateProfile(txt);
 
   } catch(e) {
-    td.innerHTML = '<div class="mwho">your coach</div><div class="msg co">Connection issue — check your Worker URL in the app settings, or try again in a moment.</div>';
+    const isBlocked = String(e).includes('fetch') || String(e).includes('network') || String(e).includes('Failed');
+    const msg = isBlocked
+      ? 'This preview is running inside Claude\'s sandbox which blocks external requests. Upload the file to GitHub Pages and it will work perfectly — your Worker tested successfully.'
+      : 'Connection error: ' + es(String(e));
+    td.innerHTML = '<div class="mwho">your coach</div><div class="msg co">' + msg + '</div>';
   }
 
   box.scrollTop = box.scrollHeight;
