@@ -954,7 +954,7 @@ async function callAPI(messages, system, maxTokens) {
   const r = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-5-20251001', max_tokens: maxTokens || 1000, system, messages })
+    body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: maxTokens || 1000, system, messages })
   });
   const data = await r.json();
   // If Anthropic returned an error, throw it so the caller can handle it
