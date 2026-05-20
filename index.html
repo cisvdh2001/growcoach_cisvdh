@@ -126,11 +126,11 @@ body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-w
 @media(prefers-color-scheme:dark){.spill{color:#F5C4B3;}}
 
 /* === PAGES === */
-.pg{display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
-.pg.on{display:block;}
+.pg{display:none;flex:1;min-height:0;}
+.pg.on{display:flex;flex-direction:column;}
 #pg-chat.on{display:flex;flex-direction:column;overflow:hidden;}
 
-.ct{padding:22px 24px 40px;}
+.ct{padding:22px 24px 40px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
 @media(max-width:699px){.ct{padding:16px 15px 32px;}}
 
 .ph{margin-bottom:20px;}
@@ -930,9 +930,13 @@ function toggleSide() { document.getElementById('sb').classList.contains('open')
 function nav(id) {
   document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
-  document.getElementById('pg-' + id).classList.add('on');
+  const pg = document.getElementById('pg-' + id);
+  if (!pg) return;
+  pg.classList.add('on');
   const nb = document.getElementById('nb-' + id); if (nb) nb.classList.add('on');
-  document.getElementById('pg-' + id).scrollTop = 0;
+  // scroll reset — for flex pages scroll is on the .ct child
+  const ct = pg.querySelector('.ct');
+  if (ct) ct.scrollTop = 0; else pg.scrollTop = 0;
   if (window.innerWidth < 700) closeSide();
 }
 
@@ -1155,8 +1159,53 @@ document.getElementById('cin').addEventListener('input', function() {
 });
 
 // ── Boot ──────────────────────────────────────────────────────
-updateStreak();
-initDOM();
+// Expose all functions to window so inline onclick attributes can find them
+// (required in sandboxed iframe / artifact contexts)
+// Explicit window assignments so onclick attributes work in sandboxed contexts
+function _exposeAll() {
+  window.nav               = nav;
+  window.openSide          = openSide;
+  window.closeSide         = closeSide;
+  window.toggleSide        = toggleSide;
+  window.qs                = qs;
+  window.sc                = sc;
+  window.ck                = ck;
+  window.genCh             = genCh;
+  window.bump              = bump;
+  window.addGoal           = addGoal;
+  window.markDone          = markDone;
+  window.saveJ             = saveJ;
+  window.doPrep            = doPrep;
+  window.savePro           = savePro;
+  window.addBook           = addBook;
+  window.setBookStatus     = setBookStatus;
+  window.deleteBook        = deleteBook;
+  window.switchBookTab     = switchBookTab;
+  window.addSkill          = addSkill;
+  window.bumpSkill         = bumpSkill;
+  window.deleteSkill       = deleteSkill;
+  window.switchSkillTab    = switchSkillTab;
+  window.addPersonalGoal   = addPersonalGoal;
+  window.bumpPgoal         = bumpPgoal;
+  window.addHabit          = addHabit;
+  window.checkHabit        = checkHabit;
+  window.deleteHabit       = deleteHabit;
+  window.savePersonalEntry = savePersonalEntry;
+  window.bumpSkill         = bumpSkill;
+  window.deleteBook        = deleteBook;
+}
+
+function _boot() {
+  _exposeAll();
+  updateStreak();
+  initDOM();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _boot);
+} else {
+  _boot();
+}
 
 // ════════════════════════════════════════════════════════════════
 // PERSONAL GROWTH — Books, Skills, Personal Goals, Habits
