@@ -391,6 +391,7 @@ body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-w
   </div>
   <div style="font-size:12px;color:var(--t2);padding:8px 12px 2px" id="user-email-display"></div>
   <button class="signout-btn" onclick="signOut()"><i class="ti ti-logout"></i> Sign out</button>
+  <button class="signout-btn" onclick="nav('debug')" style="font-size:11px;color:var(--t2)"><i class="ti ti-bug"></i> Debug</button>
 </nav>
 
   <div class="main">
@@ -723,6 +724,20 @@ body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-w
       </div>
     </div>
 
+    <!-- DEBUG -->
+    <div class="pg" id="pg-debug">
+      <div class="ct">
+        <div class="ph"><h1>Debug</h1><p>Check what is happening with cloud sync.</p></div>
+        <div class="card" id="debug-status" style="font-family:monospace;font-size:12px;white-space:pre-wrap;line-height:1.6;color:var(--t0)">Press "Run diagnostics" to check.</div>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <button class="bpri" onclick="runDiagnostics()">Run diagnostics</button>
+          <button class="bout" onclick="forceSave()">Force save to cloud</button>
+          <button class="bout" onclick="forceLoad()">Force load from cloud</button>
+        </div>
+        <div class="card" id="debug-log" style="font-family:monospace;font-size:11px;white-space:pre-wrap;line-height:1.6;color:var(--t1);margin-top:14px;max-height:300px;overflow-y:auto">Log will appear here...</div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /shell -->
 
@@ -773,7 +788,7 @@ async function sbSignOut() {
 }
 
 async function sbLoadData() {
-  if (!accessToken || !currentUser) return null;
+  if (!accessToken || !currentUser) { dbLog && dbLog('sbLoadData skipped — not signed in'); return null; }
   const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=data', {
     headers: sbHeaders({ 'Accept': 'application/json' })
   });
@@ -787,7 +802,7 @@ async function sbLoadData() {
 }
 
 async function sbSaveData(state) {
-  if (!accessToken || !currentUser) return;
+  if (!accessToken || !currentUser) { dbLog && dbLog('sbSaveData skipped — not signed in'); return; }
   showSyncing(true);
   try {
     const r = await fetch(SUPABASE_REST + '/user_data', {
@@ -1409,6 +1424,95 @@ document.getElementById('cin').addEventListener('input', function() {
 // ── Boot ──────────────────────────────────────────────────────
 // Expose all functions to window so inline onclick attributes can find them
 // (required in sandboxed iframe / artifact contexts)
+
+// ── Debug helpers ─────────────────────────────────────────────────────────────
+function dbLog(msg) {
+  const el = document.getElementById('debug-log');
+  if (el) {
+    const time = new Date().toLocaleTimeString();
+    el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
+  }
+  console.log('[growcoach]', msg);
+}
+
+async function runDiagnostics() {
+  const el = document.getElementById('debug-status');
+  if (!el) return;
+  let out = '';
+  out += 'SUPABASE_URL: ' + SUPABASE_URL + '\n';
+  out += 'currentUser: ' + (currentUser || 'NOT SET') + '\n';
+  out += 'accessToken: ' + (accessToken ? accessToken.substring(0,20) + '...' : 'NOT SET') + '\n';
+  out += '\n--- Testing Supabase connection ---\n';
+  
+  // Test 1: Can we reach Supabase at all?
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/', {
+      headers: { 'apikey': SUPABASE_KEY }
+    });
+    out += 'Supabase reachable: YES (status ' + r.status + ')\n';
+  } catch(e) {
+    out += 'Supabase reachable: NO — ' + e.message + '\n';
+  }
+
+  // Test 2: Can we read from user_data table?
+  if (currentUser && accessToken) {
+    try {
+      const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=id,updated_at', {
+        headers: sbHeaders({ 'Accept': 'application/json' })
+      });
+      const text = await r.text();
+      out += 'Read user_data (status ' + r.status + '): ' + text.substring(0,200) + '\n';
+    } catch(e) {
+      out += 'Read user_data FAILED: ' + e.message + '\n';
+    }
+
+    // Test 3: Can we write to user_data table?
+    try {
+      const r = await fetch(SUPABASE_REST + '/user_data', {
+        method: 'POST',
+        headers: sbHeaders({ 'Prefer': 'return=representation,resolution=merge-duplicates' }),
+        body: JSON.stringify({ id: currentUser, data: { test: true }, updated_at: new Date().toISOString() })
+      });
+      const text = await r.text();
+      out += 'Write user_data (status ' + r.status + '): ' + text.substring(0,200) + '\n';
+    } catch(e) {
+      out += 'Write user_data FAILED: ' + e.message + '\n';
+    }
+  } else {
+    out += 'Skipping read/write tests — not signed in\n';
+  }
+
+  out += '\n--- Local state ---\n';
+  out += 'books: ' + books.length + ' items\n';
+  out += 'skills: ' + skills.length + ' items\n';
+  out += 'goals: ' + gp.length + ' items\n';
+  out += 'journal entries: ' + jents.length + '\n';
+  out += 'personal goals: ' + pgoals.length + '\n';
+
+  el.textContent = out;
+  dbLog('Diagnostics complete');
+}
+
+async function forceSave() {
+  dbLog('Force saving to cloud...');
+  const state = buildStateObject();
+  dbLog('State has ' + JSON.stringify(Object.keys(state)));
+  await sbSaveData(state);
+  dbLog('Force save complete');
+}
+
+async function forceLoad() {
+  dbLog('Force loading from cloud...');
+  const cloud = await loadCloudState();
+  if (cloud) {
+    dbLog('Cloud data found. books=' + (cloud.books||[]).length + ' goals=' + (cloud.gp||[]).length);
+    applyState(cloud);
+    dbLog('State applied from cloud');
+  } else {
+    dbLog('No cloud data found');
+  }
+}
+
 // Explicit window assignments so onclick attributes work in sandboxed contexts
 function _exposeAll() {
   window.nav               = nav;
@@ -1445,6 +1549,9 @@ function _exposeAll() {
   window.signIn            = signIn;
   window.signUp            = signUp;
   window.signOut           = signOut;
+  window.runDiagnostics    = runDiagnostics;
+  window.forceSave         = forceSave;
+  window.forceLoad         = forceLoad;
 }
 
 // ── Auth UI functions ────────────────────────────────────────────────────────
