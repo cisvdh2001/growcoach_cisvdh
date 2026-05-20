@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>grow.coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --a:#C05C2A;--alt:#FAECE7;--amd:#F5C4B3;--adk:#712B13;
+  --teal:#0F6E56;--amb:#854F0B;--amblt:#FAEEDA;
+  --b0:#fff;--b1:#f7f6f3;--b2:#f0ede8;
+  --t0:#1a1a18;--t1:#5c5b57;--t2:#9c9b96;
+  --bd0:rgba(26,26,24,.10);--bd1:rgba(26,26,24,.20);
+  --rm:10px;--rl:14px;
+  --f:'DM Sans',system-ui,sans-serif;--ff:'Fraunces',Georgia,serif;
+  --dw:250px;--th:54px;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --b0:#1c1c1a;--b1:#242422;--b2:#2a2a28;
+  --t0:#f0ede8;--t1:#a8a79f;--t2:#6e6d68;
+  --bd0:rgba(240,237,232,.09);--bd1:rgba(240,237,232,.17);
+  --alt:#3a1a0c;--amd:#6a2a10;--adk:#F5C4B3;--amblt:#2e1e04;
+}}
+
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-webkit-font-smoothing:antialiased;}
+
+/* === LAYOUT === */
+.shell{display:flex;height:100dvh;height:100vh;overflow:hidden;}
+
+/* === SIDEBAR === */
+.sidebar{
+  width:var(--dw);flex-shrink:0;
+  background:var(--b1);border-right:.5px solid var(--bd0);
+  display:flex;flex-direction:column;
+  padding:20px 12px 20px;gap:2px;overflow-y:auto;
+  /* mobile: slide in over content as overlay */
+  position:fixed;top:0;left:0;bottom:0;z-index:300;
+  transform:translateX(-100%);
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  padding-top:calc(20px + var(--st));
+}
+.sidebar.open{transform:translateX(0);}
+
+/* Desktop: sidebar is a normal flex child inside .shell */
+@media(min-width:700px){
+  .sidebar{
+    position:relative;
+    transform:none!important;
+    height:100vh;
+    padding-top:20px;
+    flex-shrink:0;
+  }
+}
+
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:200;opacity:0;transition:opacity .25s;
+}
+.overlay.show{display:block;opacity:1;}
+@media(min-width:700px){.overlay{display:none!important;}}
+
+.brand{font-family:var(--ff);font-size:20px;font-weight:400;letter-spacing:-.02em;
+  color:var(--t0);padding:0 8px 16px;border-bottom:.5px solid var(--bd0);margin-bottom:8px;}
+.brand em{color:var(--a);font-style:italic;}
+
+.x-btn{
+  display:flex;position:absolute;top:14px;right:12px;
+  width:36px;height:36px;border:none;background:transparent;
+  color:var(--t1);font-size:20px;cursor:pointer;
+  border-radius:var(--rm);align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+@media(min-width:700px){.x-btn{display:none;}}
+
+.nb{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:var(--rm);border:none;background:transparent;
+  color:var(--t1);font-family:var(--f);font-size:14px;
+  cursor:pointer;width:100%;text-align:left;
+  transition:background .12s,color .12s;min-height:44px;
+  -webkit-tap-highlight-color:transparent;
+}
+.nb:hover{background:var(--b0);color:var(--t0);}
+.nb.on{background:var(--b0);color:var(--t0);font-weight:500;border:.5px solid var(--bd0);}
+.nb i{font-size:17px;flex-shrink:0;}
+
+.sk-box{margin-top:auto;border:.5px solid var(--bd0);border-radius:var(--rl);padding:14px 16px;background:var(--b0);}
+.sk-box .big{font-family:var(--ff);font-size:32px;color:var(--a);line-height:1;}
+.sk-box .lbl{font-size:12px;color:var(--t2);margin-top:4px;}
+
+/* === MAIN === */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* === TOPBAR === */
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  height:var(--th);padding:0 16px;
+  padding-top:var(--st);
+  background:var(--b1);border-bottom:.5px solid var(--bd0);flex-shrink:0;
+}
+.hbtn{
+  width:38px;height:38px;border:none;background:transparent;
+  color:var(--t0);font-size:22px;cursor:pointer;
+  border-radius:var(--rm);display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;transition:background .12s;
+}
+.hbtn:hover{background:var(--b0);}
+/* On desktop hide hamburger — sidebar always visible */
+@media(min-width:700px){.hbtn{display:none;}}
+.ttl{font-family:var(--ff);font-size:18px;letter-spacing:-.02em;color:var(--t0);}
+.ttl em{color:var(--a);font-style:italic;}
+.spill{
+  margin-left:auto;display:flex;align-items:center;gap:6px;
+  background:var(--alt);border:.5px solid var(--amd);border-radius:20px;
+  padding:5px 12px;font-size:13px;color:var(--adk);
+}
+.spill .sn{font-family:var(--ff);font-size:16px;color:var(--a);}
+@media(prefers-color-scheme:dark){.spill{color:#F5C4B3;}}
+
+/* === PAGES === */
+.pg{display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
+.pg.on{display:block;}
+#pg-chat.on{display:flex;flex-direction:column;overflow:hidden;}
+
+.ct{padding:22px 24px 40px;}
+@media(max-width:699px){.ct{padding:16px 15px 32px;}}
+
+.ph{margin-bottom:20px;}
+.ph h1{font-family:var(--ff);font-size:24px;font-weight:400;letter-spacing:-.02em;margin-bottom:5px;color:var(--t0);}
+.ph p{font-size:14px;color:var(--t1);line-height:1.6;}
+@media(max-width:699px){.ph h1{font-size:21px;}}
+
+/* profile banner */
+.pbanner{background:var(--alt);border:.5px solid var(--amd);border-radius:var(--rl);padding:15px 17px;display:flex;align-items:center;gap:13px;margin-bottom:18px;}
+.av{width:44px;height:44px;border-radius:50%;background:var(--a);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-size:19px;color:#fff;flex-shrink:0;}
+.pn{font-weight:500;font-size:14px;color:var(--adk);}
+.ps{font-size:12.5px;color:#993C1D;margin-top:3px;line-height:1.4;}
+@media(prefers-color-scheme:dark){.pn{color:#F5C4B3;}.ps{color:#F0997B;}}
+
+/* stats */
+.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px;}
+.st{background:var(--b1);border-radius:var(--rm);padding:13px 13px 11px;}
+.st .n{font-family:var(--ff);font-size:26px;color:var(--t0);line-height:1;}
+.st .l{font-size:12px;color:var(--t2);margin-top:4px;}
+
+/* cards */
+.card{border:.5px solid var(--bd0);border-radius:var(--rl);padding:15px 17px;margin-bottom:11px;background:var(--b0);}
+.ctag{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:6px;}
+.ctit{font-family:var(--ff);font-size:17px;font-weight:400;margin-bottom:6px;letter-spacing:-.01em;color:var(--t0);}
+.cbod{font-size:13.5px;color:var(--t1);line-height:1.7;}
+.acard{background:var(--alt)!important;border-color:var(--amd)!important;}
+.acard .ctag{color:var(--a);}.acard .ctit{color:var(--adk);}.acard .cbod{color:#7A3A1A;}
+@media(prefers-color-scheme:dark){.acard .ctit{color:#F5C4B3;}.acard .cbod{color:#D08060;}}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px;}
+@media(max-width:499px){.wgrid{grid-template-columns:1fr;}}
+
+.sl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin:16px 0 9px;}
+
+/* chat */
+.chips{display:flex;flex-wrap:wrap;gap:7px;padding:12px 16px;flex-shrink:0;background:var(--b0);border-bottom:.5px solid var(--bd0);}
+.chip{font-size:13px;padding:7px 13px;border-radius:20px;border:.5px solid var(--bd1);background:var(--b1);color:var(--t1);cursor:pointer;font-family:var(--f);-webkit-tap-highlight-color:transparent;}
+.chip:active{background:var(--b2);}
+.cmsgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;display:flex;flex-direction:column;gap:11px;background:var(--b1);}
+.mw{display:flex;flex-direction:column;}.mw.u{align-items:flex-end;}
+.mwho{font-size:11px;color:var(--t2);margin-bottom:4px;}
+.msg{max-width:84%;font-size:14px;line-height:1.65;padding:11px 14px;border-radius:18px;}
+.msg.co{background:var(--b0);border:.5px solid var(--bd0);border-bottom-left-radius:4px;}
+.msg.us{background:var(--a);color:#fff;border-bottom-right-radius:4px;}
+.typing{display:flex;gap:5px;align-items:center;padding:11px 14px;background:var(--b0);border:.5px solid var(--bd0);border-radius:18px;border-bottom-left-radius:4px;width:fit-content;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--t2);animation:bob 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes bob{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
+.cfoot{display:flex;align-items:flex-end;gap:9px;padding:11px 13px;padding-bottom:calc(11px + var(--sb));border-top:.5px solid var(--bd0);background:var(--b0);flex-shrink:0;}
+.cfoot textarea{flex:1;resize:none;min-height:42px;max-height:110px;border:.5px solid var(--bd1);border-radius:var(--rm);padding:10px 13px;font-family:var(--f);font-size:15px;background:var(--b1);color:var(--t0);line-height:1.5;outline:none;-webkit-appearance:none;transition:border-color .15s;}
+.cfoot textarea:focus{border-color:var(--a);}
+.bsend{width:42px;height:42px;flex-shrink:0;background:var(--a);color:#fff;border:none;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background .13s;}
+.bsend:active{background:var(--adk);}.bsend:disabled{background:var(--bd1);}
+
+/* goals */
+.glist{display:flex;flex-direction:column;gap:10px;margin-bottom:15px;}
+.gi{border:.5px solid var(--bd0);border-radius:var(--rl);padding:13px 15px;background:var(--b0);}
+.gt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;gap:8px;}
+.gname{font-weight:500;font-size:14px;line-height:1.4;}.gwhen{font-size:12px;color:var(--t2);white-space:nowrap;flex-shrink:0;}
+.pbar{height:4px;background:var(--bd0);border-radius:2px;overflow:hidden;}
+.pfill{height:100%;border-radius:2px;background:var(--a);transition:width .4s;}
+.pfill.tl{background:var(--teal);}.pfill.am{background:#BA7517;}
+.gbot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;}
+.gpct{font-size:12px;color:var(--t2);}
+.arow{display:flex;gap:9px;margin-top:4px;}
+.arow input{flex:1;border:.5px solid var(--bd0);border-radius:var(--rm);padding:11px 13px;font-family:var(--f);font-size:15px;background:var(--b0);color:var(--t0);outline:none;-webkit-appearance:none;min-height:46px;transition:border-color .15s;}
+.arow input:focus{border-color:var(--a);}
+
+/* buttons */
+.bsm{background:transparent;border:.5px solid var(--bd1);border-radius:var(--rm);padding:6px 13px;font-family:var(--f);font-size:13px;cursor:pointer;color:var(--t0);min-height:34px;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+.bsm:active{background:var(--b1);}
+.bout{background:transparent;border:.5px solid var(--bd1);border-radius:var(--rm);padding:11px 18px;font-family:var(--f);font-size:14px;cursor:pointer;color:var(--t0);min-height:46px;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent;}
+.bout:active{background:var(--b1);}
+.bpri{background:var(--a);color:#fff;border:none;border-radius:var(--rm);padding:11px 20px;font-family:var(--f);font-size:14px;font-weight:500;cursor:pointer;min-height:46px;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent;}
+.bpri:active{background:var(--adk);}
+
+/* challenges */
+.chc{border-radius:var(--rl);padding:15px 17px;margin-bottom:11px;border:.5px solid var(--amd);background:var(--alt);}
+.chc.done{border-color:var(--bd0);background:var(--b1);}
+.chtag{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--a);margin-bottom:7px;}
+.chc.done .chtag{color:var(--t2);}
+.chtit{font-family:var(--ff);font-size:16px;color:var(--adk);margin-bottom:7px;letter-spacing:-.01em;}
+.chc.done .chtit{color:var(--t1);}
+.chbod{font-size:13.5px;color:#7A3A1A;line-height:1.7;margin-bottom:13px;}
+.chc.done .chbod{color:var(--t2);}
+@media(prefers-color-scheme:dark){.chtit{color:#F5C4B3;}.chbod{color:#D08060;}}
+.bdone{background:var(--a);color:#fff;border:none;border-radius:var(--rm);padding:9px 17px;font-family:var(--f);font-size:14px;font-weight:500;cursor:pointer;min-height:46px;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent;}
+.bdone:active{background:var(--adk);}.bdone.ck{background:var(--teal);cursor:default;}
+
+/* journal */
+.jprompt{background:var(--alt);border:.5px solid var(--amd);border-radius:var(--rl);padding:14px 16px;margin-bottom:15px;}
+.jplbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--a);margin-bottom:6px;}
+.jpq{font-family:var(--ff);font-size:16px;font-style:italic;color:var(--adk);line-height:1.5;}
+@media(prefers-color-scheme:dark){.jpq{color:#F5C4B3;}}
+.jwrite{display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+.jwrite textarea{border:.5px solid var(--bd0);border-radius:var(--rm);padding:13px;font-family:var(--f);font-size:15px;resize:vertical;min-height:100px;background:var(--b0);color:var(--t0);line-height:1.65;outline:none;-webkit-appearance:none;transition:border-color .15s;}
+.jwrite textarea:focus{border-color:var(--a);}
+.jent{border:.5px solid var(--bd0);border-radius:var(--rm);padding:12px 14px;margin-bottom:9px;background:var(--b1);}
+.jdate{font-size:12px;color:var(--t2);margin-bottom:5px;}.jtxt{font-size:14px;line-height:1.65;color:var(--t0);}
+
+/* prep */
+.pform{border:.5px solid var(--bd0);border-radius:var(--rl);padding:17px 19px;margin-bottom:13px;background:var(--b0);}
+.pform label{font-size:13px;color:var(--t1);margin-bottom:6px;display:block;}
+.pform select,.pform textarea{width:100%;border:.5px solid var(--bd0);border-radius:var(--rm);padding:11px 13px;font-family:var(--f);font-size:15px;background:var(--b1);color:var(--t0);margin-bottom:13px;outline:none;-webkit-appearance:none;min-height:46px;transition:border-color .15s;}
+.pform select:focus,.pform textarea:focus{border-color:var(--a);}
+.pform textarea{resize:vertical;min-height:88px;}
+.pres{border:.5px solid var(--bd0);border-radius:var(--rl);padding:17px 19px;background:var(--b0);}
+.presbod{font-size:14px;line-height:1.8;color:var(--t0);}
+
+/* profile */
+.crow{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px;}
+.wc{font-size:13px;padding:6px 12px;border-radius:20px;background:var(--b1);border:.5px solid var(--bd0);color:var(--t1);}
+.wc.red{background:#FCEBEB;border-color:#F7C1C1;color:#791F1F;}
+.wc.am{background:var(--amblt);border-color:#FAC775;color:var(--amb);}
+@media(prefers-color-scheme:dark){.wc.red{background:#3a1010;border-color:#7a2020;color:#F09595;}.wc.am{background:#2e1e04;border-color:#6a3e0a;color:#FAC775;}}
+.pfields{display:flex;flex-direction:column;gap:13px;}
+.pfields label{font-size:13px;color:var(--t1);margin-bottom:5px;display:block;}
+.pfields input,.pfields textarea{width:100%;border:.5px solid var(--bd0);border-radius:var(--rm);padding:11px 13px;font-family:var(--f);font-size:15px;background:var(--b1);color:var(--t0);outline:none;-webkit-appearance:none;min-height:46px;transition:border-color .15s;}
+.pfields input:focus,.pfields textarea:focus{border-color:var(--a);}
+.pfields textarea{resize:vertical;min-height:78px;}
+.svd{font-size:13px;color:var(--teal);margin-top:9px;display:none;}
+</style>
+</head>
+<body>
+
+<!-- dim overlay when sidebar open on mobile -->
+<div class="overlay" id="ov" onclick="closeSide()"></div>
+
+
+<!-- app shell: sidebar + main side by side on desktop -->
+<div class="shell">
+
+  <nav class="sidebar" id="sb">
+  <button class="x-btn" onclick="closeSide()" aria-label="Close"><i class="ti ti-x"></i></button>
+  <div class="brand">grow<em>.</em>coach</div>
+  <button class="nb on" id="nb-home"       onclick="nav('home')">       <i class="ti ti-home"></i>        Home</button>
+  <button class="nb"    id="nb-chat"       onclick="nav('chat')">       <i class="ti ti-messages"></i>    Chat</button>
+  <button class="nb"    id="nb-goals"      onclick="nav('goals')">      <i class="ti ti-target"></i>      Goals</button>
+  <button class="nb"    id="nb-challenges" onclick="nav('challenges')"> <i class="ti ti-bolt"></i>        Challenges</button>
+  <button class="nb"    id="nb-journal"    onclick="nav('journal')">    <i class="ti ti-notebook"></i>    Journal</button>
+  <button class="nb"    id="nb-prep"       onclick="nav('prep')">       <i class="ti ti-microphone"></i>  Prep</button>
+  <button class="nb"    id="nb-profile"    onclick="nav('profile')">    <i class="ti ti-user"></i>        Profile</button>
+  <div class="sk-box">
+    <div class="big" id="sk-n">1</div>
+    <div class="lbl">day streak</div>
+  </div>
+</nav>
+
+  <div class="main">
+
+    <!-- top bar -->
+    <div class="topbar">
+      <button class="hbtn" onclick="toggleSide()" aria-label="Menu"><i class="ti ti-menu-2"></i></button>
+      <div class="ttl">grow<em>.</em>coach</div>
+      <div class="spill"><span class="sn" id="sk-pill">1</span><i class="ti ti-flame" style="font-size:14px"></i></div>
+    </div>
+
+    <!-- HOME -->
+    <div class="pg on" id="pg-home">
+      <div class="ct">
+        <div class="ph"><h1>Good to see you, Cis</h1><p>Process Engineer to Advanced PE to Team Lead. 7 months out. Let's make them count.</p></div>
+        <div class="pbanner">
+          <div class="av">C</div>
+          <div><div class="pn">Cis — Process Engineer, Prodrive Technologies</div><div class="ps">Results-driven &amp; empathetic · Eindhoven · 3 yr exp · 24 y/o</div></div>
+        </div>
+        <div class="srow">
+          <div class="st"><div class="n" id="gdn">0</div><div class="l">goals done</div></div>
+          <div class="st"><div class="n" id="cdn">0</div><div class="l">challenges</div></div>
+          <div class="st"><div class="n" id="jdn">0</div><div class="l">reflections</div></div>
+        </div>
+        <div class="sl">This week's focus</div>
+        <div class="wgrid">
+          <div class="card acard"><div class="ctag">Development area</div><div class="ctit">Direct feedback</div><div class="cbod">Your biggest gap. Find one moment this week to give specific, honest feedback tied to a real situation — not vague praise.</div></div>
+          <div class="card acard"><div class="ctag">Strategic priority</div><div class="ctit">Make ambition visible</div><div class="cbod">Your manager is hands-off. Signal where you're heading — they won't notice unless you tell them directly.</div></div>
+        </div>
+        <div class="card"><div class="ctag">Reading this month</div><div class="ctit">Radical Candor — Kim Scott</div><div class="cbod">Written for your results-driven but empathetic style. Directly addresses giving honest feedback while keeping the relationship intact. One chapter a week fits your time budget.</div></div>
+        <div class="card"><div class="ctag">7-month target</div><div class="ctit">The January conversation</div><div class="cbod">Every challenge, every project, every piece of feedback is evidence for January. Your manager is hands-off — build the case yourself and bring it to them proactively. Start now.</div></div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="pg" id="pg-chat">
+      <div class="chips">
+        <button class="chip" onclick="qs('What should I focus on this week?')">This week's focus</button>
+        <button class="chip" onclick="qs('I had a difficult situation at work today, can we talk through it?')">Difficult situation</button>
+        <button class="chip" onclick="qs('Give me a challenge for delegating better')">Delegating</button>
+        <button class="chip" onclick="qs('How do I tell my manager about my ambitions without sounding like I am complaining?')">Tell my manager</button>
+        <button class="chip" onclick="qs('I struggle to give direct feedback, what do I do?')">Feedback help</button>
+      </div>
+      <div class="cmsgs" id="cmsgs">
+        <div class="mw">
+          <div class="mwho">your coach</div>
+          <div class="msg co">Hey Cis. Here's where we are: you're 24, 3 years in, already doing some of the management work informally — and you want the title, responsibility, and pay to match by January.<br><br>Your weak spots: direct feedback, delegating, and structuring your communication. Your manager is hands-off, so you'll need to make your progress visible yourself. Nobody's going to hand you this.<br><br>Your style is results-driven but empathetic. That's a strong combination. What's on your mind?</div>
+        </div>
+      </div>
+      <div class="cfoot">
+        <textarea id="cin" placeholder="Message your coach..." onkeydown="ck(event)" rows="1"></textarea>
+        <button class="bsend" id="bsnd" onclick="sc()" aria-label="Send"><i class="ti ti-arrow-up"></i></button>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="pg" id="pg-goals">
+      <div class="ct">
+        <div class="ph"><h1>Your goals</h1><p>7-month roadmap to January. Tap +10% as you make progress.</p></div>
+        <div class="glist" id="glist">
+          <div class="gi"><div class="gt"><span class="gname">Get promoted to Advanced PE</span><span class="gwhen">Jan 2026</span></div><div class="pbar"><div class="pfill" id="gp0" style="width:15%"></div></div><div class="gbot"><span class="gpct" id="gl0">15% — in progress</span><button class="bsm" onclick="bump(0)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Formalize team lead responsibilities</span><span class="gwhen">Ongoing</span></div><div class="pbar"><div class="pfill tl" id="gp1" style="width:40%"></div></div><div class="gbot"><span class="gpct" id="gl1">40% — leading informally</span><button class="bsm" onclick="bump(1)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Have career talk with manager</span><span class="gwhen">4 weeks</span></div><div class="pbar"><div class="pfill am" id="gp2" style="width:0%"></div></div><div class="gbot"><span class="gpct" id="gl2">0% — high priority</span><button class="bsm" onclick="bump(2)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Read Radical Candor</span><span class="gwhen">1 ch/week</span></div><div class="pbar"><div class="pfill" id="gp3" style="width:0%"></div></div><div class="gbot"><span class="gpct" id="gl3">0% — not started</span><button class="bsm" onclick="bump(3)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Document 3 wins for January</span><span class="gwhen">Dec 2025</span></div><div class="pbar"><div class="pfill tl" id="gp4" style="width:0%"></div></div><div class="gbot"><span class="gpct" id="gl4">0% — not started</span><button class="bsm" onclick="bump(4)">+10%</button></div></div>
+        </div>
+        <div class="sl">Add a goal</div>
+        <div class="arow"><input type="text" id="newg" placeholder="e.g. Own a cross-team project end-to-end"><button class="bout" onclick="addGoal()"><i class="ti ti-plus"></i> Add</button></div>
+      </div>
+    </div>
+
+    <!-- CHALLENGES -->
+    <div class="pg" id="pg-challenges">
+      <div class="ct">
+        <div class="ph"><h1>Micro-challenges</h1><p>Small, deliberate actions. One hour a week is enough if you're intentional.</p></div>
+        <div class="chc" id="ch0"><div class="chtag">This week · Direct feedback</div><div class="chtit">Give one piece of specific, honest feedback</div><div class="chbod">Pick a colleague and give feedback tied to a real, recent situation. Not "good job" — something like: "When you pushed back on the timeline in that meeting, that was the right call because it protected the delivery date." Specificity is everything. Try the harder version too: feedback that is critical but constructive.</div><button class="bdone" id="cb0" onclick="markDone(0)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <div class="chc" id="ch1"><div class="chtag">This week · Delegating</div><div class="chtit">Hand off one task you would normally keep</div><div class="chbod">Find something on your plate someone on your support team could handle — even if you would do it faster. Hand it over with clear context: what, why, what good looks like. Do not take it back. Delegation is about scaling your impact, not offloading work.</div><button class="bdone" id="cb1" onclick="markDone(1)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <div class="chc" id="ch2"><div class="chtag">This month · Visibility</div><div class="chtit">Write a one-page win summary</div><div class="chbod">Document one thing you led or improved recently. Problem, what you did, result. One page max. This becomes raw material for your January conversation. Your manager will not remember everything — you need to remind them.</div><button class="bdone" id="cb2" onclick="markDone(2)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <div class="chc" id="ch3"><div class="chtag">This month · Communication</div><div class="chtit">Structure a team update with a clear point of view</div><div class="chbod">Next time you update your manager or team, use: situation, what I decided and why, what I need from you. Engineers give status updates. Managers give recommendations. Practice the latter before you have the title.</div><button class="bdone" id="cb3" onclick="markDone(3)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <button class="bout" onclick="genCh()"><i class="ti ti-refresh"></i> Generate new challenge</button>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="pg" id="pg-journal">
+      <div class="ct">
+        <div class="ph"><h1>Reflection journal</h1><p>You learn by doing and reflecting. This is where doing becomes insight.</p></div>
+        <div class="jprompt"><div class="jplbl">Today's prompt</div><div class="jpq" id="jpq">Think about the last time someone on your team was struggling. What did you notice, and what did you do — or not do?</div></div>
+        <div class="jwrite">
+          <textarea id="jarea" placeholder="Write freely. No one else sees this."></textarea>
+          <button class="bout" onclick="saveJ()"><i class="ti ti-device-floppy"></i> Save entry</button>
+        </div>
+        <div class="sl">Past entries</div>
+        <div id="jents"><div style="font-size:14px;color:var(--t2)">No entries yet.</div></div>
+      </div>
+    </div>
+
+    <!-- PREP -->
+    <div class="pg" id="pg-prep">
+      <div class="ct">
+        <div class="ph"><h1>Conversation prep</h1><p>Get ready for any important conversation. Especially the ones that feel uncomfortable.</p></div>
+        <div class="pform">
+          <label>What kind of conversation?</label>
+          <select id="ptype">
+            <option value="manager-ambition">Telling my manager about my ambitions</option>
+            <option value="manager-feedback">Asking my manager for feedback</option>
+            <option value="promotion">Making the case for Advanced PE or more responsibility</option>
+            <option value="peer-feedback">Giving direct feedback to a peer</option>
+            <option value="conflict">Handling a conflict or disagreement</option>
+            <option value="delegation">Delegating to a team member</option>
+            <option value="other">Something else</option>
+          </select>
+          <label>Describe the situation briefly — context and goal</label>
+          <textarea id="pctx" placeholder="e.g. I want to tell my manager I am ready for more responsibility, but they are hands-off and I am not sure how to bring it up..."></textarea>
+          <button class="bpri" onclick="doPrep()">Prepare me</button>
+        </div>
+        <div id="pout" style="display:none">
+          <div class="sl">Your preparation guide</div>
+          <div class="pres"><div class="presbod" id="pbod"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="pg" id="pg-profile">
+      <div class="ct">
+        <div class="ph"><h1>Your profile</h1><p>What your coach knows about you. Edit any time.</p></div>
+        <div class="sl">Development gaps</div>
+        <div class="crow"><span class="wc red">Direct feedback and difficult conversations</span><span class="wc red">Delegating and letting go</span><span class="wc red">Structuring and communicating ideas</span></div>
+        <div class="sl">How you learn best</div>
+        <div class="crow"><span class="wc am">Reflecting and journaling</span><span class="wc am">Doing — challenges</span><span class="wc am">Reading</span><span class="wc am">Discussing</span></div>
+        <div class="sl">Profile details</div>
+        <div class="pfields">
+          <div><label>Name</label><input type="text" id="pfn" value="Cis"></div>
+          <div><label>Role</label><input type="text" id="pfr" value="Process Engineer (Core), Prodrive Technologies"></div>
+          <div><label>Experience</label><input type="text" id="pfe" value="3 years, 24 years old"></div>
+          <div><label>Manager relationship</label><input type="text" id="pfm" value="Hands-off — autonomy, limited guidance"></div>
+          <div><label>Management style ambition</label><textarea id="pfs">Results-driven but empathetic — deliver outcomes while genuinely caring for the team</textarea></div>
+          <div><label>7-month goal</label><textarea id="pfg">Show I have outgrown my current role by January 2026. Get Advanced PE title. Formalize team lead responsibilities. Earn more responsibility and money.</textarea></div>
+          <div><label>Preferred coaching tone</label><input type="text" id="pft" value="Direct and honest — no sugarcoating"></div>
+          <button class="bpri" onclick="savePro()"><i class="ti ti-check"></i> Save changes</button>
+          <div class="svd" id="svd"><i class="ti ti-circle-check"></i> Profile saved</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+const SYS=`You are a direct, no-sugarcoating personal career growth coach. Your client is Cis.
+WHO CIS IS: 24 years old, Process Engineer (Core) at Prodrive Technologies, Eindhoven, Netherlands. 3 years experience in procurement/supply chain and production/manufacturing. Already informally leading a support engineering team. Manager is hands-off — autonomy but limited guidance.
+GOALS: Show outgrown current role by January 2026. Get promoted to Process Engineer (Advanced). Formalize team lead responsibilities. Earn more responsibility and money long-term. Become a results-driven but empathetic manager who helps people grow.
+DEVELOPMENT GAPS: 1. Giving direct feedback and having difficult conversations. 2. Delegating and letting go of control. 3. Structuring and communicating ideas clearly.
+LEARNING STYLE: Reflecting and journaling, doing challenges, reading, discussing.
+COACHING TONE: Direct and honest. No sugarcoating. Truth over comfort.
+APPROACH: Concrete and specific — no generic career advice. Reference their actual situation at Prodrive. Challenge them when thinking is off. 150-250 words unless asked for more. One good follow-up question when relevant.`;
+
+// ── Default state ──────────────────────────────────────────────
+const DEFAULT_STATE = {
+  gp: [15, 40, 0, 0, 0],
+  goalNames: [
+    'Get promoted to Advanced PE',
+    'Formalize team lead responsibilities',
+    'Have career talk with manager',
+    'Read Radical Candor',
+    'Document 3 wins for January'
+  ],
+  goalWhens: ['Jan 2026','Ongoing','4 weeks','1 ch/week','Dec 2025'],
+  goalColors: ['','tl','am','','tl'],
+  chDone: [false, false, false, false],
+  jents: [],
+  streak: 1,
+  lastVisit: '',
+  profile: {
+    name: 'Cis',
+    role: 'Process Engineer (Core), Prodrive Technologies',
+    exp: '3 years, 24 years old',
+    mgr: 'Hands-off — autonomy, limited guidance',
+    style: 'Results-driven but empathetic — deliver outcomes while genuinely caring for the team',
+    goal: 'Show I have outgrown my current role by January 2026. Get Advanced PE title. Formalize team lead responsibilities. Earn more responsibility and money.',
+    tone: 'Direct and honest — no sugarcoating'
+  }
+};
+
+// ── Persistence ────────────────────────────────────────────────
+const STORE_KEY = 'growcoach_v1';
+
+function saveState() {
+  try {
+    const state = {
+      gp: gp,
+      goalNames: goalNames,
+      goalWhens: goalWhens,
+      goalColors: goalColors,
+      chDone: chDone,
+      jents: jents,
+      streak: streak,
+      lastVisit: lastVisit,
+      profile: {
+        name: document.getElementById('pfn').value,
+        role: document.getElementById('pfr').value,
+        exp: document.getElementById('pfe').value,
+        mgr: document.getElementById('pfm').value,
+        style: document.getElementById('pfs').value,
+        goal: document.getElementById('pfg').value,
+        tone: document.getElementById('pft').value
+      }
+    };
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+// ── State variables ────────────────────────────────────────────
+let hist = [];
+const prompts = [
+  "Think about the last time someone on your team was struggling. What did you notice, and what did you do — or not do? What would a good manager have done differently?",
+  "When did you last avoid a conversation you knew you should have had? What were you afraid of?",
+  "What is one task you are holding onto that you could delegate? What is the real reason you have not?",
+  "Think of your best manager ever. What specifically made them effective? How far are you from that today?",
+  "You want to be results-driven but empathetic. Think of a recent situation where those two things were in tension. How did you navigate it?",
+  "What would you do differently if you already had the Advanced PE title? What is stopping you from doing those things right now?"
+];
+
+// Load saved or defaults
+const saved = loadState();
+const s = saved || DEFAULT_STATE;
+
+let gp         = s.gp;
+let goalNames  = s.goalNames;
+let goalWhens  = s.goalWhens;
+let goalColors = s.goalColors;
+let chDone     = s.chDone;
+let jents      = s.jents;
+let streak     = s.streak;
+let lastVisit  = s.lastVisit;
+
+// ── Streak logic (update on load) ─────────────────────────────
+function updateStreak() {
+  const today = new Date().toDateString();
+  if (lastVisit === today) return; // already counted today
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (lastVisit === yesterday) {
+    streak += 1;
+  } else if (lastVisit !== '') {
+    streak = 1; // streak broken
+  }
+  lastVisit = today;
+  saveState();
+}
+
+// ── DOM init: render saved state into the page ─────────────────
+function initDOM() {
+  // Streak
+  setsk(streak);
+
+  // Goals — rebuild the goal list from saved state
+  const glist = document.getElementById('glist');
+  glist.innerHTML = '';
+  for (let i = 0; i < gp.length; i++) {
+    glist.appendChild(makeGoalEl(i));
+  }
+
+  // Challenges — mark done ones
+  for (let i = 0; i < 4; i++) {
+    if (chDone[i]) {
+      const btn = document.getElementById('cb' + i);
+      if (btn) {
+        btn.innerHTML = '<i class="ti ti-check"></i> Done';
+        btn.classList.add('ck');
+        btn.disabled = true;
+        document.getElementById('ch' + i).classList.add('done');
+      }
+    }
+  }
+
+  // Journal
+  renderJournal();
+
+  // Stats
+  updateStats();
+
+  // Profile fields
+  const p = s.profile;
+  document.getElementById('pfn').value = p.name || '';
+  document.getElementById('pfr').value = p.role || '';
+  document.getElementById('pfe').value = p.exp  || '';
+  document.getElementById('pfm').value = p.mgr  || '';
+  document.getElementById('pfs').value = p.style|| '';
+  document.getElementById('pfg').value = p.goal || '';
+  document.getElementById('pft').value = p.tone || '';
+
+  // Journal prompt
+  document.getElementById('jpq').textContent = prompts[Math.floor(Math.random() * prompts.length)];
+}
+
+function makeGoalEl(i) {
+  const div = document.createElement('div');
+  div.className = 'gi';
+  div.id = 'goal-item-' + i;
+  const pct = gp[i];
+  const colorClass = goalColors[i] || '';
+  const lbl = pct >= 100 ? '100% complete!' : pct + '% — ' + goalLabel(i);
+  div.innerHTML =
+    '<div class="gt"><span class="gname">' + es(goalNames[i]) + '</span><span class="gwhen">' + es(goalWhens[i]) + '</span></div>' +
+    '<div class="pbar"><div class="pfill ' + colorClass + '" id="gp' + i + '" style="width:' + pct + '%"></div></div>' +
+    '<div class="gbot"><span class="gpct" id="gl' + i + '">' + lbl + '</span><button class="bsm" onclick="bump(' + i + ')">+10%</button></div>';
+  return div;
+}
+
+function goalLabel(i) {
+  const labels = ['in progress','leading informally','high priority','in progress','in progress'];
+  return labels[i] || 'in progress';
+}
+
+function updateStats() {
+  const gdn = gp.filter(x => x >= 100).length;
+  const cdn = chDone.filter(Boolean).length;
+  const jdn = jents.length;
+  document.getElementById('gdn').textContent = gdn;
+  document.getElementById('cdn').textContent = cdn;
+  document.getElementById('jdn').textContent = jdn;
+}
+
+function renderJournal() {
+  const container = document.getElementById('jents');
+  if (!jents.length) {
+    container.innerHTML = '<div style="font-size:14px;color:var(--t2)">No entries yet.</div>';
+    return;
+  }
+  container.innerHTML = jents.map(e =>
+    '<div class="jent"><div class="jdate">' + e.date + '</div><div class="jtxt">' + es(e.text) + '</div></div>'
+  ).join('');
+}
+
+// ── Sidebar ────────────────────────────────────────────────────
+function openSide()   { document.getElementById('sb').classList.add('open');  document.getElementById('ov').classList.add('show'); }
+function closeSide()  { document.getElementById('sb').classList.remove('open'); document.getElementById('ov').classList.remove('show'); }
+function toggleSide() { document.getElementById('sb').classList.contains('open') ? closeSide() : openSide(); }
+
+// ── Navigation ─────────────────────────────────────────────────
+function nav(id) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  const nb = document.getElementById('nb-' + id);
+  if (nb) nb.classList.add('on');
+  document.getElementById('pg-' + id).scrollTop = 0;
+  if (window.innerWidth < 700) closeSide();
+}
+
+function setsk(n) {
+  document.getElementById('sk-n').textContent = n;
+  document.getElementById('sk-pill').textContent = n;
+}
+
+// ── Chat ───────────────────────────────────────────────────────
+function ck(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sc(); } }
+function qs(t) { nav('chat'); document.getElementById('cin').value = t; sc(); }
+function genCh() { nav('chat'); document.getElementById('cin').value = 'Give me a new micro-challenge for my current weak spots'; sc(); }
+function es(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function sc() {
+  const inp = document.getElementById('cin');
+  const txt = inp.value.trim(); if (!txt) return;
+  const btn = document.getElementById('bsnd');
+  btn.disabled = true; inp.value = ''; inp.style.height = 'auto';
+  const box = document.getElementById('cmsgs');
+
+  const ud = document.createElement('div'); ud.className = 'mw u';
+  ud.innerHTML = '<div class="mwho" style="text-align:right">you</div><div class="msg us">' + es(txt) + '</div>';
+  box.appendChild(ud);
+
+  const td = document.createElement('div'); td.className = 'mw';
+  td.innerHTML = '<div class="mwho">your coach</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  box.appendChild(td);
+  box.scrollTop = box.scrollHeight;
+
+  hist.push({ role: 'user', content: txt });
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: SYS, messages: hist })
+    });
+    const d = await r.json();
+    const rep = d.content.map(c => c.text || '').join('');
+    hist.push({ role: 'assistant', content: rep });
+    td.innerHTML = '<div class="mwho">your coach</div><div class="msg co">' + es(rep).replace(/\n/g, '<br>') + '</div>';
+  } catch(e) {
+    td.innerHTML = '<div class="mwho">your coach</div><div class="msg co">Connection issue — try again in a moment.</div>';
+  }
+
+  box.scrollTop = box.scrollHeight;
+  btn.disabled = false;
+  inp.focus();
+}
+
+// ── Goals ──────────────────────────────────────────────────────
+function bump(i) {
+  gp[i] = Math.min(100, gp[i] + 10);
+  document.getElementById('gp' + i).style.width = gp[i] + '%';
+  document.getElementById('gl' + i).textContent = gp[i] >= 100 ? '100% complete!' : gp[i] + '% — ' + goalLabel(i);
+  updateStats();
+  saveState();
+}
+
+function addGoal() {
+  const inp = document.getElementById('newg');
+  const txt = inp.value.trim(); if (!txt) return;
+  const i = gp.length;
+  gp.push(0);
+  goalNames.push(txt);
+  goalWhens.push('New');
+  goalColors.push('');
+  document.getElementById('glist').appendChild(makeGoalEl(i));
+  inp.value = '';
+  updateStats();
+  saveState();
+}
+
+// ── Challenges ─────────────────────────────────────────────────
+function markDone(i) {
+  const btn = document.getElementById('cb' + i);
+  btn.innerHTML = '<i class="ti ti-check"></i> Done';
+  btn.classList.add('ck');
+  btn.disabled = true;
+  document.getElementById('ch' + i).classList.add('done');
+  chDone[i] = true;
+  streak++;
+  setsk(streak);
+  updateStats();
+  saveState();
+}
+
+// ── Journal ────────────────────────────────────────────────────
+function saveJ() {
+  const txt = document.getElementById('jarea').value.trim(); if (!txt) return;
+  const now = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+  jents.unshift({ date: now, text: txt });
+  document.getElementById('jarea').value = '';
+  renderJournal();
+  updateStats();
+  saveState();
+}
+
+// ── Prep ───────────────────────────────────────────────────────
+async function doPrep() {
+  const type = document.getElementById('ptype').value;
+  const ctx  = document.getElementById('pctx').value.trim();
+  if (!ctx) { alert('Describe the situation first.'); return; }
+
+  const out = document.getElementById('pout');
+  const bod = document.getElementById('pbod');
+  out.style.display = 'block';
+  bod.innerHTML = '<div class="typing" style="width:fit-content"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
+  const pr = 'Cis needs to prepare for: "' + type + '". Context: ' + ctx +
+    '\n\nDirect practical prep guide:\n1. What Cis actually wants to achieve\n2. How to open (give a literal first sentence)\n3. 3-4 key points\n4. Likely pushback and how to respond\n5. What NOT to say or do\n\nBe direct. Reference Cis situation at Prodrive. No generic advice.';
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: SYS, messages: [{ role: 'user', content: pr }] })
+    });
+    const d = await r.json();
+    bod.innerHTML = es(d.content.map(c => c.text || '').join('')).replace(/\n/g, '<br>');
+  } catch(e) {
+    bod.innerHTML = 'Connection issue — try again.';
+  }
+}
+
+// ── Profile ────────────────────────────────────────────────────
+function savePro() {
+  saveState();
+  const m = document.getElementById('svd');
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 2500);
+}
+
+// ── Chat textarea auto-resize ──────────────────────────────────
+document.getElementById('cin').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 110) + 'px';
+});
+
+// ── Auto-save profile on change ────────────────────────────────
+['pfn','pfr','pfe','pfm','pfs','pfg','pft'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', saveState);
+});
+
+// ── Boot ───────────────────────────────────────────────────────
+updateStreak();
+initDOM();
+</script>
+</body>
+</html>
