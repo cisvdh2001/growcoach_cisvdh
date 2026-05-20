@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>grow.coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --a:#C05C2A;--alt:#FAECE7;--amd:#F5C4B3;--adk:#712B13;
+  --teal:#0F6E56;--amb:#854F0B;--amblt:#FAEEDA;
+  --b0:#fff;--b1:#f7f6f3;--b2:#f0ede8;
+  --t0:#1a1a18;--t1:#5c5b57;--t2:#9c9b96;
+  --bd0:rgba(26,26,24,.10);--bd1:rgba(26,26,24,.20);
+  --rm:10px;--rl:14px;
+  --f:'DM Sans',system-ui,sans-serif;--ff:'Fraunces',Georgia,serif;
+  --dw:250px;--th:54px;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --b0:#1c1c1a;--b1:#242422;--b2:#2a2a28;
+  --t0:#f0ede8;--t1:#a8a79f;--t2:#6e6d68;
+  --bd0:rgba(240,237,232,.09);--bd1:rgba(240,237,232,.17);
+  --alt:#3a1a0c;--amd:#6a2a10;--adk:#F5C4B3;--amblt:#2e1e04;
+}}
+
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-webkit-font-smoothing:antialiased;}
+
+/* === LAYOUT === */
+.shell{display:flex;height:100dvh;height:100vh;overflow:hidden;}
+
+/* === SIDEBAR === */
+.sidebar{
+  width:var(--dw);flex-shrink:0;
+  background:var(--b1);border-right:.5px solid var(--bd0);
+  display:flex;flex-direction:column;
+  padding:20px 12px 20px;gap:2px;overflow-y:auto;
+  /* mobile: slide in over content as overlay */
+  position:fixed;top:0;left:0;bottom:0;z-index:300;
+  transform:translateX(-100%);
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  padding-top:calc(20px + var(--st));
+}
+.sidebar.open{transform:translateX(0);}
+
+/* Desktop: sidebar is a normal flex child inside .shell */
+@media(min-width:700px){
+  .sidebar{
+    position:relative;
+    transform:none!important;
+    height:100vh;
+    padding-top:20px;
+    flex-shrink:0;
+  }
+}
+
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:200;opacity:0;transition:opacity .25s;
+}
+.overlay.show{display:block;opacity:1;}
+@media(min-width:700px){.overlay{display:none!important;}}
+
+.brand{font-family:var(--ff);font-size:20px;font-weight:400;letter-spacing:-.02em;
+  color:var(--t0);padding:0 8px 16px;border-bottom:.5px solid var(--bd0);margin-bottom:8px;}
+.brand em{color:var(--a);font-style:italic;}
+
+.x-btn{
+  display:flex;position:absolute;top:14px;right:12px;
+  width:36px;height:36px;border:none;background:transparent;
+  color:var(--t1);font-size:20px;cursor:pointer;
+  border-radius:var(--rm);align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+@media(min-width:700px){.x-btn{display:none;}}
+
+.nb{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:var(--rm);border:none;background:transparent;
+  color:var(--t1);font-family:var(--f);font-size:14px;
+  cursor:pointer;width:100%;text-align:left;
+  transition:background .12s,color .12s;min-height:44px;
+  -webkit-tap-highlight-color:transparent;
+}
+.nb:hover{background:var(--b0);color:var(--t0);}
+.nb.on{background:var(--b0);color:var(--t0);font-weight:500;border:.5px solid var(--bd0);}
+.nb i{font-size:17px;flex-shrink:0;}
+
+.sk-box{margin-top:auto;border:.5px solid var(--bd0);border-radius:var(--rl);padding:14px 16px;background:var(--b0);}
+.sk-box .big{font-family:var(--ff);font-size:32px;color:var(--a);line-height:1;}
+.sk-box .lbl{font-size:12px;color:var(--t2);margin-top:4px;}
+
+/* === MAIN === */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* === TOPBAR === */
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  height:var(--th);padding:0 16px;
+  padding-top:var(--st);
+  background:var(--b1);border-bottom:.5px solid var(--bd0);flex-shrink:0;
+}
+.hbtn{
+  width:38px;height:38px;border:none;background:transparent;
+  color:var(--t0);font-size:22px;cursor:pointer;
+  border-radius:var(--rm);display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;transition:background .12s;
+}
+.hbtn:hover{background:var(--b0);}
+/* On desktop hide hamburger — sidebar always visible */
+@media(min-width:700px){.hbtn{display:none;}}
+.ttl{font-family:var(--ff);font-size:18px;letter-spacing:-.02em;color:var(--t0);}
+.ttl em{color:var(--a);font-style:italic;}
+.spill{
+  margin-left:auto;display:flex;align-items:center;gap:6px;
+  background:var(--alt);border:.5px solid var(--amd);border-radius:20px;
+  padding:5px 12px;font-size:13px;color:var(--adk);
+}
+.spill .sn{font-family:var(--ff);font-size:16px;color:var(--a);}
+@media(prefers-color-scheme:dark){.spill{color:#F5C4B3;}}
+
+/* === PAGES === */
+.pg{display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
+.pg.on{display:block;}
+#pg-chat.on{display:flex;flex-direction:column;overflow:hidden;}
+
+.ct{padding:22px 24px 40px;}
+@media(max-width:699px){.ct{padding:16px 15px 32px;}}
+
+.ph{margin-bottom:20px;}
+.ph h1{font-family:var(--ff);font-size:24px;font-weight:400;letter-spacing:-.02em;margin-bottom:5px;color:var(--t0);}
+.ph p{font-size:14px;color:var(--t1);line-height:1.6;}
+@media(max-width:699px){.ph h1{font-size:21px;}}
+
+/* profile banner */
+.pbanner{background:var(--alt);border:.5px solid var(--amd);border-radius:var(--rl);padding:15px 17px;display:flex;align-items:center;gap:13px;margin-bottom:18px;}
+.av{width:44px;height:44px;border-radius:50%;background:var(--a);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-size:19px;color:#fff;flex-shrink:0;}
+.pn{font-weight:500;font-size:14px;color:var(--adk);}
+.ps{font-size:12.5px;color:#993C1D;margin-top:3px;line-height:1.4;}
+@media(prefers-color-scheme:dark){.pn{color:#F5C4B3;}.ps{color:#F0997B;}}
+
+/* stats */
+.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px;}
+.st{background:var(--b1);border-radius:var(--rm);padding:13px 13px 11px;}
+.st .n{font-family:var(--ff);font-size:26px;color:var(--t0);line-height:1;}
+.st .l{font-size:12px;color:var(--t2);margin-top:4px;}
+
+/* cards */
+.card{border:.5px solid var(--bd0);border-radius:var(--rl);padding:15px 17px;margin-bottom:11px;background:var(--b0);}
+.ctag{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:6px;}
+.ctit{font-family:var(--ff);font-size:17px;font-weight:400;margin-bottom:6px;letter-spacing:-.01em;color:var(--t0);}
+.cbod{font-size:13.5px;color:var(--t1);line-height:1.7;}
+.acard{background:var(--alt)!important;border-color:var(--amd)!important;}
+.acard .ctag{color:var(--a);}.acard .ctit{color:var(--adk);}.acard .cbod{color:#7A3A1A;}
+@media(prefers-color-scheme:dark){.acard .ctit{color:#F5C4B3;}.acard .cbod{color:#D08060;}}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px;}
+@media(max-width:499px){.wgrid{grid-template-columns:1fr;}}
+
+.sl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin:16px 0 9px;}
+
+/* chat */
+.chips{display:flex;flex-wrap:wrap;gap:7px;padding:12px 16px;flex-shrink:0;background:var(--b0);border-bottom:.5px solid var(--bd0);}
+.chip{font-size:13px;padding:7px 13px;border-radius:20px;border:.5px solid var(--bd1);background:var(--b1);color:var(--t1);cursor:pointer;font-family:var(--f);-webkit-tap-highlight-color:transparent;}
+.chip:active{background:var(--b2);}
+.cmsgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;display:flex;flex-direction:column;gap:11px;background:var(--b1);}
+.mw{display:flex;flex-direction:column;}.mw.u{align-items:flex-end;}
+.mwho{font-size:11px;color:var(--t2);margin-bottom:4px;}
+.msg{max-width:84%;font-size:14px;line-height:1.65;padding:11px 14px;border-radius:18px;}
+.msg.co{background:var(--b0);border:.5px solid var(--bd0);border-bottom-left-radius:4px;}
+.msg.us{background:var(--a);color:#fff;border-bottom-right-radius:4px;}
+.typing{display:flex;gap:5px;align-items:center;padding:11px 14px;background:var(--b0);border:.5px solid var(--bd0);border-radius:18px;border-bottom-left-radius:4px;width:fit-content;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--t2);animation:bob 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes bob{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
+.cfoot{display:flex;align-items:flex-end;gap:9px;padding:11px 13px;padding-bottom:calc(11px + var(--sb));border-top:.5px solid var(--bd0);background:var(--b0);flex-shrink:0;}
+.cfoot textarea{flex:1;resize:none;min-height:42px;max-height:110px;border:.5px solid var(--bd1);border-radius:var(--rm);padding:10px 13px;font-family:var(--f);font-size:15px;background:var(--b1);color:var(--t0);line-height:1.5;outline:none;-webkit-appearance:none;transition:border-color .15s;}
+.cfoot textarea:focus{border-color:var(--a);}
+.bsend{width:42px;height:42px;flex-shrink:0;background:var(--a);color:#fff;border:none;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background .13s;}
+.bsend:active{background:var(--adk);}.bsend:disabled{background:var(--bd1);}
+
+/* goals */
+.glist{display:flex;flex-direction:column;gap:10px;margin-bottom:15px;}
+.gi{border:.5px solid var(--bd0);border-radius:var(--rl);padding:13px 15px;background:var(--b0);}
+.gt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;gap:8px;}
+.gname{font-weight:500;font-size:14px;line-height:1.4;}.gwhen{font-size:12px;color:var(--t2);white-space:nowrap;flex-shrink:0;}
+.pbar{height:4px;background:var(--bd0);border-radius:2px;overflow:hidden;}
+.pfill{height:100%;border-radius:2px;background:var(--a);transition:width .4s;}
+.pfill.tl{background:var(--teal);}.pfill.am{background:#BA7517;}
+.gbot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;}
+.gpct{font-size:12px;color:var(--t2);}
+.arow{display:flex;gap:9px;margin-top:4px;}
+.arow input{flex:1;border:.5px solid var(--bd0);border-radius:var(--rm);padding:11px 13px;font-family:var(--f);font-size:15px;background:var(--b0);color:var(--t0);outline:none;-webkit-appearance:none;min-height:46px;transition:border-color .15s;}
+.arow input:focus{border-color:var(--a);}
+
+/* buttons */
+.bsm{background:transparent;border:.5px solid var(--bd1);border-radius:var(--rm);padding:6px 13px;font-family:var(--f);font-size:13px;cursor:pointer;color:var(--t0);min-height:34px;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+.bsm:active{background:var(--b1);}
+.bout{background:transparent;border:.5px solid var(--bd1);border-radius:var(--rm);padding:11px 18px;font-family:var(--f);font-size:14px;cursor:pointer;color:var(--t0);min-height:46px;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent;}
+.bout:active{background:var(--b1);}
+.bpri{background:var(--a);color:#fff;border:none;border-radius:var(--rm);padding:11px 20px;font-family:var(--f);font-size:14px;font-weight:500;cursor:pointer;min-height:46px;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent;}
+.bpri:active{background:var(--adk);}
+
+/* challenges */
+.chc{border-radius:var(--rl);padding:15px 17px;margin-bottom:11px;border:.5px solid var(--amd);background:var(--alt);}
+.chc.done{border-color:var(--bd0);background:var(--b1);}
+.chtag{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--a);margin-bottom:7px;}
+.chc.done .chtag{color:var(--t2);}
+.chtit{font-family:var(--ff);font-size:16px;color:var(--adk);margin-bottom:7px;letter-spacing:-.01em;}
+.chc.done .chtit{color:var(--t1);}
+.chbod{font-size:13.5px;color:#7A3A1A;line-height:1.7;margin-bottom:13px;}
+.chc.done .chbod{color:var(--t2);}
+@media(prefers-color-scheme:dark){.chtit{color:#F5C4B3;}.chbod{color:#D08060;}}
+.bdone{background:var(--a);color:#fff;border:none;border-radius:var(--rm);padding:9px 17px;font-family:var(--f);font-size:14px;font-weight:500;cursor:pointer;min-height:46px;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent;}
+.bdone:active{background:var(--adk);}.bdone.ck{background:var(--teal);cursor:default;}
+
+/* journal */
+.jprompt{background:var(--alt);border:.5px solid var(--amd);border-radius:var(--rl);padding:14px 16px;margin-bottom:15px;}
+.jplbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--a);margin-bottom:6px;}
+.jpq{font-family:var(--ff);font-size:16px;font-style:italic;color:var(--adk);line-height:1.5;}
+@media(prefers-color-scheme:dark){.jpq{color:#F5C4B3;}}
+.jwrite{display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+.jwrite textarea{border:.5px solid var(--bd0);border-radius:var(--rm);padding:13px;font-family:var(--f);font-size:15px;resize:vertical;min-height:100px;background:var(--b0);color:var(--t0);line-height:1.65;outline:none;-webkit-appearance:none;transition:border-color .15s;}
+.jwrite textarea:focus{border-color:var(--a);}
+.jent{border:.5px solid var(--bd0);border-radius:var(--rm);padding:12px 14px;margin-bottom:9px;background:var(--b1);}
+.jdate{font-size:12px;color:var(--t2);margin-bottom:5px;}.jtxt{font-size:14px;line-height:1.65;color:var(--t0);}
+
+/* prep */
+.pform{border:.5px solid var(--bd0);border-radius:var(--rl);padding:17px 19px;margin-bottom:13px;background:var(--b0);}
+.pform label{font-size:13px;color:var(--t1);margin-bottom:6px;display:block;}
+.pform select,.pform textarea{width:100%;border:.5px solid var(--bd0);border-radius:var(--rm);padding:11px 13px;font-family:var(--f);font-size:15px;background:var(--b1);color:var(--t0);margin-bottom:13px;outline:none;-webkit-appearance:none;min-height:46px;transition:border-color .15s;}
+.pform select:focus,.pform textarea:focus{border-color:var(--a);}
+.pform textarea{resize:vertical;min-height:88px;}
+.pres{border:.5px solid var(--bd0);border-radius:var(--rl);padding:17px 19px;background:var(--b0);}
+.presbod{font-size:14px;line-height:1.8;color:var(--t0);}
+
+/* profile */
+.crow{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px;}
+.wc{font-size:13px;padding:6px 12px;border-radius:20px;background:var(--b1);border:.5px solid var(--bd0);color:var(--t1);}
+.wc.red{background:#FCEBEB;border-color:#F7C1C1;color:#791F1F;}
+.wc.am{background:var(--amblt);border-color:#FAC775;color:var(--amb);}
+@media(prefers-color-scheme:dark){.wc.red{background:#3a1010;border-color:#7a2020;color:#F09595;}.wc.am{background:#2e1e04;border-color:#6a3e0a;color:#FAC775;}}
+.pfields{display:flex;flex-direction:column;gap:13px;}
+.pfields label{font-size:13px;color:var(--t1);margin-bottom:5px;display:block;}
+.pfields input,.pfields textarea{width:100%;border:.5px solid var(--bd0);border-radius:var(--rm);padding:11px 13px;font-family:var(--f);font-size:15px;background:var(--b1);color:var(--t0);outline:none;-webkit-appearance:none;min-height:46px;transition:border-color .15s;}
+.pfields input:focus,.pfields textarea:focus{border-color:var(--a);}
+.pfields textarea{resize:vertical;min-height:78px;}
+.svd{font-size:13px;color:var(--teal);margin-top:9px;display:none;}
+
+/* === BOOKS & SKILLS === */
+.book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px;}
+.book-card{border:.5px solid var(--bd0);border-radius:var(--rl);padding:14px 15px;background:var(--b0);position:relative;}
+.book-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:12px;margin-bottom:8px;}
+.book-status.reading{background:#FFF8E7;color:#854F0B;border:.5px solid #FAC775;}
+.book-status.done{background:var(--tlt,#E1F5EE);color:var(--teal);border:.5px solid #8FD4BB;}
+.book-status.want{background:var(--b1);color:var(--t2);border:.5px solid var(--bd0);}
+@media(prefers-color-scheme:dark){
+  .book-status.reading{background:#2e1e04;color:#FAC775;}
+  .book-status.done{background:#0a2e24;color:#5FC9A0;}
+  .book-status.want{background:var(--b2);}
+}
+.book-title{font-family:var(--ff);font-size:15px;font-weight:400;color:var(--t0);margin-bottom:3px;letter-spacing:-.01em;}
+.book-author{font-size:12px;color:var(--t2);margin-bottom:10px;}
+.book-note{font-size:12.5px;color:var(--t1);line-height:1.5;margin-bottom:10px;}
+.book-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.btag-btn{font-size:11.5px;padding:4px 10px;border-radius:10px;border:.5px solid var(--bd1);background:transparent;color:var(--t1);cursor:pointer;font-family:var(--f);-webkit-tap-highlight-color:transparent;}
+.btag-btn:active{background:var(--b1);}
+.btag-btn.active-reading{background:#FFF8E7;color:#854F0B;border-color:#FAC775;}
+.btag-btn.active-done{background:#E1F5EE;color:var(--teal);border-color:#8FD4BB;}
+@media(prefers-color-scheme:dark){
+  .btag-btn.active-reading{background:#2e1e04;color:#FAC775;}
+  .btag-btn.active-done{background:#0a2e24;color:#5FC9A0;}
+}
+
+.skill-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.skill-item{border:.5px solid var(--bd0);border-radius:var(--rl);padding:13px 15px;background:var(--b0);}
+.skill-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;gap:8px;}
+.skill-name{font-weight:500;font-size:14px;line-height:1.4;}
+.skill-cat{font-size:11px;padding:3px 9px;border-radius:12px;background:var(--alt);color:var(--a);border:.5px solid var(--amd);white-space:nowrap;}
+.skill-bot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;}
+.skill-pct{font-size:12px;color:var(--t2);}
+
+/* personal growth tabs inside page */
+.ptabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:.5px solid var(--bd0);padding-bottom:0;}
+.ptab{background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-family:var(--f);font-size:13.5px;color:var(--t1);cursor:pointer;margin-bottom:-1px;transition:color .12s,border-color .12s;-webkit-tap-highlight-color:transparent;}
+.ptab.on{color:var(--a);border-bottom-color:var(--a);font-weight:500;}
+.ptab-panel{display:none;}.ptab-panel.on{display:block;}
+
+/* nav section labels */
+.nb-section{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--t2);padding:12px 12px 4px;margin-top:4px;}
+
+/* home growth strip */
+.growth-strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+@media(max-width:499px){.growth-strip{grid-template-columns:1fr;}}
+
+/* stat row extended */
+.srow6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px;}
+
+/* add-form card */
+.add-form{border:.5px solid var(--bd0);border-radius:var(--rl);padding:15px 17px;background:var(--b0);margin-bottom:14px;}
+.add-form input,.add-form textarea,.add-form select{width:100%;border:.5px solid var(--bd0);border-radius:var(--rm);padding:10px 12px;font-family:var(--f);font-size:14px;background:var(--b1);color:var(--t0);outline:none;-webkit-appearance:none;margin-bottom:10px;min-height:42px;transition:border-color .15s;}
+.add-form input:focus,.add-form textarea:focus,.add-form select:focus{border-color:var(--a);}
+.add-form textarea{resize:vertical;min-height:70px;}
+.add-form .row{display:flex;gap:9px;}
+.add-form .row input{margin-bottom:0;}
+</style>
+</head>
+<body>
+
+<!-- dim overlay when sidebar open on mobile -->
+<div class="overlay" id="ov" onclick="closeSide()"></div>
+
+
+<!-- app shell: sidebar + main side by side on desktop -->
+<div class="shell">
+
+  <nav class="sidebar" id="sb">
+  <button class="x-btn" onclick="closeSide()" aria-label="Close"><i class="ti ti-x"></i></button>
+  <div class="brand">grow<em>.</em>coach</div>
+  <div class="nb-section">Overview</div>
+  <button class="nb on" id="nb-home"       onclick="nav('home')">       <i class="ti ti-home"></i>        Home</button>
+  <button class="nb"    id="nb-chat"       onclick="nav('chat')">       <i class="ti ti-messages"></i>    Chat</button>
+  <div class="nb-section">Professional</div>
+  <button class="nb"    id="nb-goals"      onclick="nav('goals')">      <i class="ti ti-target"></i>      Goals</button>
+  <button class="nb"    id="nb-challenges" onclick="nav('challenges')"> <i class="ti ti-bolt"></i>        Challenges</button>
+  <button class="nb"    id="nb-journal"    onclick="nav('journal')">    <i class="ti ti-notebook"></i>    Journal</button>
+  <button class="nb"    id="nb-prep"       onclick="nav('prep')">       <i class="ti ti-microphone"></i>  Prep</button>
+  <div class="nb-section">Personal growth</div>
+  <button class="nb"    id="nb-personal"   onclick="nav('personal')">   <i class="ti ti-seeding"></i>     Personal</button>
+  <button class="nb"    id="nb-books"      onclick="nav('books')">      <i class="ti ti-books"></i>       Books</button>
+  <button class="nb"    id="nb-skills"     onclick="nav('skills')">     <i class="ti ti-brain"></i>       Skills</button>
+  <div class="nb-section">Settings</div>
+  <button class="nb"    id="nb-profile"    onclick="nav('profile')">    <i class="ti ti-user"></i>        Profile</button>
+  <div class="sk-box">
+    <div class="big" id="sk-n">1</div>
+    <div class="lbl">day streak</div>
+  </div>
+</nav>
+
+  <div class="main">
+
+    <!-- top bar -->
+    <div class="topbar">
+      <button class="hbtn" onclick="toggleSide()" aria-label="Menu"><i class="ti ti-menu-2"></i></button>
+      <div class="ttl">grow<em>.</em>coach</div>
+      <div class="spill"><span class="sn" id="sk-pill">1</span><i class="ti ti-flame" style="font-size:14px"></i></div>
+    </div>
+
+    <!-- HOME -->
+    <div class="pg on" id="pg-home">
+      <div class="ct">
+        <div class="ph"><h1>Good to see you, Cis</h1><p>Process Engineer to Advanced PE to Team Lead. 7 months out. Let's make them count.</p></div>
+        <div class="pbanner">
+          <div class="av">C</div>
+          <div><div class="pn">Cis — Process Engineer, Prodrive Technologies</div><div class="ps">Results-driven &amp; empathetic · Eindhoven · 3 yr exp · 24 y/o</div></div>
+        </div>
+        <div class="srow6">
+          <div class="st"><div class="n" id="gdn">0</div><div class="l">work goals</div></div>
+          <div class="st"><div class="n" id="cdn">0</div><div class="l">challenges</div></div>
+          <div class="st"><div class="n" id="jdn">0</div><div class="l">reflections</div></div>
+        </div>
+        <div class="sl">This week's focus</div>
+        <div class="wgrid">
+          <div class="card acard"><div class="ctag">Development area</div><div class="ctit">Direct feedback</div><div class="cbod">Your biggest gap. Find one moment this week to give specific, honest feedback tied to a real situation — not vague praise.</div></div>
+          <div class="card acard"><div class="ctag">Strategic priority</div><div class="ctit">Make ambition visible</div><div class="cbod">Your manager is hands-off. Signal where you're heading — they won't notice unless you tell them directly.</div></div>
+        </div>
+        <div class="card"><div class="ctag">Reading this month</div><div class="ctit">Radical Candor — Kim Scott</div><div class="cbod">Written for your results-driven but empathetic style. Directly addresses giving honest feedback while keeping the relationship intact. One chapter a week fits your time budget.</div></div>
+        <div class="card"><div class="ctag">7-month target</div><div class="ctit">The January conversation</div><div class="cbod">Every challenge, every project, every piece of feedback is evidence for January. Your manager is hands-off — build the case yourself and bring it to them proactively. Start now.</div></div>
+
+        <div class="sl">Personal growth</div>
+        <div class="growth-strip">
+          <div class="card" style="cursor:pointer" onclick="nav('books')">
+            <div class="ctag">Books</div>
+            <div class="ctit" id="home-books-reading">No books in progress</div>
+            <div class="cbod" id="home-books-count">0 finished · tap to manage your reading list</div>
+          </div>
+          <div class="card" style="cursor:pointer" onclick="nav('skills')">
+            <div class="ctag">Skills</div>
+            <div class="ctit" id="home-skills-active">No skills tracked yet</div>
+            <div class="cbod" id="home-skills-count">Tap to track skills you are developing</div>
+          </div>
+        </div>
+        <div class="card" style="cursor:pointer" onclick="nav('personal')">
+          <div class="ctag">Personal goals</div>
+          <div class="ctit" id="home-pgoals-title">Set your personal goals</div>
+          <div class="cbod" id="home-pgoals-sub">Track who you want to become outside of work — habits, hobbies, personal ambitions.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="pg" id="pg-chat">
+      <div class="chips">
+        <button class="chip" onclick="qs('What should I focus on this week?')">This week's focus</button>
+        <button class="chip" onclick="qs('I had a difficult situation at work today, can we talk through it?')">Difficult situation</button>
+        <button class="chip" onclick="qs('Give me a challenge for delegating better')">Delegating</button>
+        <button class="chip" onclick="qs('How do I tell my manager about my ambitions without sounding like I am complaining?')">Tell my manager</button>
+        <button class="chip" onclick="qs('I struggle to give direct feedback, what do I do?')">Feedback help</button>
+      </div>
+      <div class="cmsgs" id="cmsgs">
+        <div class="mw">
+          <div class="mwho">your coach</div>
+          <div class="msg co">Hey Cis. Here's where we are: you're 24, 3 years in, already doing some of the management work informally — and you want the title, responsibility, and pay to match by January.<br><br>Your weak spots: direct feedback, delegating, and structuring your communication. Your manager is hands-off, so you'll need to make your progress visible yourself. Nobody's going to hand you this.<br><br>Your style is results-driven but empathetic. That's a strong combination. What's on your mind?</div>
+        </div>
+      </div>
+      <div class="cfoot">
+        <textarea id="cin" placeholder="Message your coach..." onkeydown="ck(event)" rows="1"></textarea>
+        <button class="bsend" id="bsnd" onclick="sc()" aria-label="Send"><i class="ti ti-arrow-up"></i></button>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="pg" id="pg-goals">
+      <div class="ct">
+        <div class="ph"><h1>Your goals</h1><p>7-month roadmap to January. Tap +10% as you make progress.</p></div>
+        <div class="glist" id="glist">
+          <div class="gi"><div class="gt"><span class="gname">Get promoted to Advanced PE</span><span class="gwhen">Jan 2026</span></div><div class="pbar"><div class="pfill" id="gp0" style="width:15%"></div></div><div class="gbot"><span class="gpct" id="gl0">15% — in progress</span><button class="bsm" onclick="bump(0)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Formalize team lead responsibilities</span><span class="gwhen">Ongoing</span></div><div class="pbar"><div class="pfill tl" id="gp1" style="width:40%"></div></div><div class="gbot"><span class="gpct" id="gl1">40% — leading informally</span><button class="bsm" onclick="bump(1)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Have career talk with manager</span><span class="gwhen">4 weeks</span></div><div class="pbar"><div class="pfill am" id="gp2" style="width:0%"></div></div><div class="gbot"><span class="gpct" id="gl2">0% — high priority</span><button class="bsm" onclick="bump(2)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Read Radical Candor</span><span class="gwhen">1 ch/week</span></div><div class="pbar"><div class="pfill" id="gp3" style="width:0%"></div></div><div class="gbot"><span class="gpct" id="gl3">0% — not started</span><button class="bsm" onclick="bump(3)">+10%</button></div></div>
+          <div class="gi"><div class="gt"><span class="gname">Document 3 wins for January</span><span class="gwhen">Dec 2025</span></div><div class="pbar"><div class="pfill tl" id="gp4" style="width:0%"></div></div><div class="gbot"><span class="gpct" id="gl4">0% — not started</span><button class="bsm" onclick="bump(4)">+10%</button></div></div>
+        </div>
+        <div class="sl">Add a goal</div>
+        <div class="arow"><input type="text" id="newg" placeholder="e.g. Own a cross-team project end-to-end"><button class="bout" onclick="addGoal()"><i class="ti ti-plus"></i> Add</button></div>
+      </div>
+    </div>
+
+    <!-- CHALLENGES -->
+    <div class="pg" id="pg-challenges">
+      <div class="ct">
+        <div class="ph"><h1>Micro-challenges</h1><p>Small, deliberate actions. One hour a week is enough if you're intentional.</p></div>
+        <div class="chc" id="ch0"><div class="chtag">This week · Direct feedback</div><div class="chtit">Give one piece of specific, honest feedback</div><div class="chbod">Pick a colleague and give feedback tied to a real, recent situation. Not "good job" — something like: "When you pushed back on the timeline in that meeting, that was the right call because it protected the delivery date." Specificity is everything. Try the harder version too: feedback that is critical but constructive.</div><button class="bdone" id="cb0" onclick="markDone(0)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <div class="chc" id="ch1"><div class="chtag">This week · Delegating</div><div class="chtit">Hand off one task you would normally keep</div><div class="chbod">Find something on your plate someone on your support team could handle — even if you would do it faster. Hand it over with clear context: what, why, what good looks like. Do not take it back. Delegation is about scaling your impact, not offloading work.</div><button class="bdone" id="cb1" onclick="markDone(1)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <div class="chc" id="ch2"><div class="chtag">This month · Visibility</div><div class="chtit">Write a one-page win summary</div><div class="chbod">Document one thing you led or improved recently. Problem, what you did, result. One page max. This becomes raw material for your January conversation. Your manager will not remember everything — you need to remind them.</div><button class="bdone" id="cb2" onclick="markDone(2)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <div class="chc" id="ch3"><div class="chtag">This month · Communication</div><div class="chtit">Structure a team update with a clear point of view</div><div class="chbod">Next time you update your manager or team, use: situation, what I decided and why, what I need from you. Engineers give status updates. Managers give recommendations. Practice the latter before you have the title.</div><button class="bdone" id="cb3" onclick="markDone(3)"><i class="ti ti-check"></i> Mark complete</button></div>
+        <button class="bout" onclick="genCh()"><i class="ti ti-refresh"></i> Generate new challenge</button>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="pg" id="pg-journal">
+      <div class="ct">
+        <div class="ph"><h1>Reflection journal</h1><p>You learn by doing and reflecting. This is where doing becomes insight.</p></div>
+        <div class="jprompt"><div class="jplbl">Today's prompt</div><div class="jpq" id="jpq">Think about the last time someone on your team was struggling. What did you notice, and what did you do — or not do?</div></div>
+        <div class="jwrite">
+          <textarea id="jarea" placeholder="Write freely. No one else sees this."></textarea>
+          <button class="bout" onclick="saveJ()"><i class="ti ti-device-floppy"></i> Save entry</button>
+        </div>
+        <div class="sl">Past entries</div>
+        <div id="jents"><div style="font-size:14px;color:var(--t2)">No entries yet.</div></div>
+      </div>
+    </div>
+
+    <!-- PREP -->
+    <div class="pg" id="pg-prep">
+      <div class="ct">
+        <div class="ph"><h1>Conversation prep</h1><p>Get ready for any important conversation. Especially the ones that feel uncomfortable.</p></div>
+        <div class="pform">
+          <label>What kind of conversation?</label>
+          <select id="ptype">
+            <option value="manager-ambition">Telling my manager about my ambitions</option>
+            <option value="manager-feedback">Asking my manager for feedback</option>
+            <option value="promotion">Making the case for Advanced PE or more responsibility</option>
+            <option value="peer-feedback">Giving direct feedback to a peer</option>
+            <option value="conflict">Handling a conflict or disagreement</option>
+            <option value="delegation">Delegating to a team member</option>
+            <option value="other">Something else</option>
+          </select>
+          <label>Describe the situation briefly — context and goal</label>
+          <textarea id="pctx" placeholder="e.g. I want to tell my manager I am ready for more responsibility, but they are hands-off and I am not sure how to bring it up..."></textarea>
+          <button class="bpri" onclick="doPrep()">Prepare me</button>
+        </div>
+        <div id="pout" style="display:none">
+          <div class="sl">Your preparation guide</div>
+          <div class="pres"><div class="presbod" id="pbod"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="pg" id="pg-profile">
+      <div class="ct">
+        <div class="ph">
+          <h1>Your profile</h1>
+          <p>Your coach reads all of this before every conversation. The more detail you add, the better the advice. The coach also updates this automatically as you share new information in chat.</p>
+        </div>
+
+        <div class="sl">Identity &amp; role</div>
+        <div class="pfields">
+          <div><label>Name</label><input type="text" id="pfn" value="Cis"></div>
+          <div><label>Current role &amp; company</label><input type="text" id="pfr" value="Process Engineer (Core), Prodrive Technologies"></div>
+          <div><label>Age &amp; years of experience</label><input type="text" id="pfe" value="24 years old, 3 years experience"></div>
+          <div><label>Location</label><input type="text" id="pfloc" value="Eindhoven, Netherlands"></div>
+          <div><label>Industry &amp; domain</label><input type="text" id="pfind" value="High-tech manufacturing, procurement/supply chain, cable assembly"></div>
+        </div>
+
+        <div class="sl">Your situation at work</div>
+        <div class="pfields">
+          <div><label>Manager relationship</label><input type="text" id="pfm" value="Hands-off — autonomy, but limited guidance or feedback"></div>
+          <div><label>Current informal responsibilities</label><textarea id="pfinf">Leading the support engineering team informally — taking over managerial tasks from my manager. Team includes Jakub, Janina, and Ireneusz.</textarea></div>
+          <div><label>Status &amp; reputation within company</label><textarea id="pfstat">Seen as technically strong and reliable. Not yet formally recognized as a leader. Colleagues respect my technical knowledge.</textarea></div>
+          <div><label>Recent feedback received</label><textarea id="pffb" placeholder="e.g. My manager said I need to communicate more proactively. A colleague told me I'm good at solving problems but sometimes hard to approach..."></textarea></div>
+          <div><label>Biggest current challenge at work</label><textarea id="pfchal" placeholder="e.g. Giving direct feedback without it feeling harsh, getting visibility with senior leadership..."></textarea></div>
+        </div>
+
+        <div class="sl">Goals &amp; ambitions</div>
+        <div class="pfields">
+          <div><label>Short-term work goal (next 6-12 months)</label><textarea id="pfg">Get promoted to Process Engineer (Advanced) by January 2026. Formalize my team lead role. Use this as leverage to earn more responsibility and a higher salary.</textarea></div>
+          <div><label>Long-term career ambition (3-5+ years)</label><textarea id="pflg" placeholder="e.g. Become an Engineering Manager, move into operations leadership, start my own company...">Become a manager — results-driven but empathetic, focused on helping people grow. Eventually lead a full engineering team.</textarea></div>
+          <div><label>Personal goals outside work</label><textarea id="pfpg" placeholder="e.g. Better work-life balance, build financial security, develop as a person, travel..."></textarea></div>
+          <div><label>What does success look like in 5 years?</label><textarea id="pfsucc" placeholder="Paint a picture — role, lifestyle, impact, income..."></textarea></div>
+        </div>
+
+        <div class="sl">Development &amp; learning</div>
+        <div class="pfields">
+          <div><label>Your honest weak spots</label><textarea id="pfweak">1. Giving direct feedback and having difficult conversations
+2. Delegating and letting go of control
+3. Structuring and communicating ideas clearly to non-technical people</textarea></div>
+          <div><label>Your genuine strengths</label><textarea id="pfstr" placeholder="e.g. Technical depth, problem solving, reliability, calm under pressure..."></textarea></div>
+          <div><label>How you learn best</label><input type="text" id="pflearn" value="Reflecting and journaling, doing challenges, reading, discussing"></div>
+          <div><label>Currently reading or studying</label><input type="text" id="pfread" placeholder="e.g. Radical Candor by Kim Scott..."></input></div>
+        </div>
+
+        <div class="sl">Coaching preferences</div>
+        <div class="pfields">
+          <div><label>How you want your coach to talk to you</label><input type="text" id="pft" value="Direct and honest — no sugarcoating. Challenge me when my thinking is off."></div>
+          <div><label>Management style you want to develop</label><textarea id="pfs">Results-driven but empathetic — deliver outcomes while genuinely caring for the team. Be honest and direct but never cold.</textarea></div>
+          <div><label>Anything else your coach should know</label><textarea id="pfelse" placeholder="Values, personal context, things you want the coach to always keep in mind..."></textarea></div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <button class="bpri" onclick="savePro()"><i class="ti ti-check"></i> Save changes</button>
+          <div class="svd" id="svd"><i class="ti ti-circle-check"></i> Profile saved</div>
+        </div>
+
+        <div style="margin-top:18px;border:.5px solid var(--bd0);border-radius:var(--rl);padding:14px 16px;background:var(--b1);">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:6px;">Auto-update log</div>
+          <div id="update-log" style="font-size:13px;color:var(--t1);line-height:1.6">No automatic updates yet. Start chatting and your profile will update as you share new information.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERSONAL GROWTH -->
+    <div class="pg" id="pg-personal">
+      <div class="ct">
+        <div class="ph">
+          <h1>Personal growth</h1>
+          <p>Who you are outside of work matters just as much. Track your personal goals, habits, and growth as a person.</p>
+        </div>
+
+        <div class="srow6" id="personal-stats-row">
+          <div class="st"><div class="n" id="pg-goals-n">0</div><div class="l">personal goals</div></div>
+          <div class="st"><div class="n" id="pg-books-n">0</div><div class="l">books read</div></div>
+          <div class="st"><div class="n" id="pg-skills-n">0</div><div class="l">skills learning</div></div>
+        </div>
+
+        <div class="sl">Personal goals</div>
+        <div class="goal-list" id="pgoal-list"></div>
+        <div class="add-form">
+          <div class="row">
+            <input type="text" id="new-pgoal" placeholder="e.g. Run a half marathon, learn Spanish, travel to Japan...">
+            <button class="bout" onclick="addPersonalGoal()" style="white-space:nowrap"><i class="ti ti-plus"></i> Add</button>
+          </div>
+        </div>
+
+        <div class="sl">Habits I'm building</div>
+        <div id="habit-list" style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px;"></div>
+        <div class="add-form">
+          <div class="row">
+            <input type="text" id="new-habit" placeholder="e.g. Morning run, reading 20 min/day, no phone before 8am...">
+            <button class="bout" onclick="addHabit()" style="white-space:nowrap"><i class="ti ti-plus"></i> Add</button>
+          </div>
+        </div>
+
+        <div class="sl">Reflections on personal growth</div>
+        <div class="jrnl-prompt" style="margin-bottom:14px">
+          <div class="jp-lbl">Prompt</div>
+          <div class="jp-q" id="personal-prompt">Outside of work, what kind of person do you want to become in the next 5 years? What does that person do differently from who you are today?</div>
+        </div>
+        <div class="jwrite">
+          <textarea id="personal-area" placeholder="Write freely about who you want to become, not just what you want to achieve..."></textarea>
+          <button class="bout" onclick="savePersonalEntry()"><i class="ti ti-device-floppy"></i> Save reflection</button>
+        </div>
+        <div id="personal-entries"><div style="font-size:14px;color:var(--t2)">No reflections yet.</div></div>
+      </div>
+    </div>
+
+    <!-- BOOKS -->
+    <div class="pg" id="pg-books">
+      <div class="ct">
+        <div class="ph">
+          <h1>Books</h1>
+          <p>Track what you're reading, what you've finished, and what you want to read. Add notes on what you took away.</p>
+        </div>
+
+        <div class="ptabs">
+          <button class="ptab on" onclick="switchBookTab('reading')">Reading now</button>
+          <button class="ptab"    onclick="switchBookTab('done')">Finished</button>
+          <button class="ptab"    onclick="switchBookTab('want')">Want to read</button>
+          <button class="ptab"    onclick="switchBookTab('all')">All books</button>
+        </div>
+
+        <div id="book-panel-reading" class="ptab-panel on">
+          <div class="book-grid" id="books-reading"></div>
+          <div id="books-reading-empty" style="font-size:14px;color:var(--t2);margin-bottom:16px;display:none">No books currently in progress.</div>
+        </div>
+        <div id="book-panel-done" class="ptab-panel">
+          <div class="book-grid" id="books-done"></div>
+          <div id="books-done-empty" style="font-size:14px;color:var(--t2);margin-bottom:16px;display:none">No finished books yet.</div>
+        </div>
+        <div id="book-panel-want" class="ptab-panel">
+          <div class="book-grid" id="books-want"></div>
+          <div id="books-want-empty" style="font-size:14px;color:var(--t2);margin-bottom:16px;display:none">Your reading list is empty.</div>
+        </div>
+        <div id="book-panel-all" class="ptab-panel">
+          <div class="book-grid" id="books-all"></div>
+        </div>
+
+        <div class="sl">Add a book</div>
+        <div class="add-form">
+          <input type="text" id="book-title-in" placeholder="Title">
+          <input type="text" id="book-author-in" placeholder="Author">
+          <select id="book-status-in">
+            <option value="reading">Currently reading</option>
+            <option value="done">Finished</option>
+            <option value="want">Want to read</option>
+          </select>
+          <textarea id="book-note-in" placeholder="Key takeaway or why you want to read it (optional)..."></textarea>
+          <button class="bpri" onclick="addBook()"><i class="ti ti-plus"></i> Add book</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="pg" id="pg-skills">
+      <div class="ct">
+        <div class="ph">
+          <h1>Skills</h1>
+          <p>Track skills you're actively developing — both professional and personal. Rate your progress and note how you're practising.</p>
+        </div>
+
+        <div class="ptabs">
+          <button class="ptab on" onclick="switchSkillTab('all')">All skills</button>
+          <button class="ptab"    onclick="switchSkillTab('professional')">Professional</button>
+          <button class="ptab"    onclick="switchSkillTab('personal')">Personal</button>
+          <button class="ptab"    onclick="switchSkillTab('completed')">Completed</button>
+        </div>
+
+        <div id="skill-panel-all"          class="ptab-panel on"><div class="skill-list" id="skills-all"></div></div>
+        <div id="skill-panel-professional" class="ptab-panel">   <div class="skill-list" id="skills-professional"></div></div>
+        <div id="skill-panel-personal"     class="ptab-panel">   <div class="skill-list" id="skills-personal"></div></div>
+        <div id="skill-panel-completed"    class="ptab-panel">   <div class="skill-list" id="skills-completed"></div></div>
+
+        <div id="skills-empty" style="font-size:14px;color:var(--t2);margin-bottom:16px">No skills tracked yet. Add your first one below.</div>
+
+        <div class="sl">Add a skill</div>
+        <div class="add-form">
+          <input type="text" id="skill-name-in" placeholder="Skill name (e.g. Public speaking, Python, Dutch language...)">
+          <select id="skill-cat-in">
+            <option value="professional">Professional</option>
+            <option value="personal">Personal</option>
+          </select>
+          <input type="text" id="skill-how-in" placeholder="How are you practising? (e.g. Duolingo 10 min/day, online course...)">
+          <button class="bpri" onclick="addSkill()"><i class="ti ti-plus"></i> Add skill</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+const WORKER_URL = 'YOUR_WORKER_URL_HERE'; // replace with your Cloudflare Worker URL
+
+// ── System prompt builder ─────────────────────────────────────
+function buildSystem(p) {
+  return `You are a direct, no-sugarcoating personal career growth coach. Your client is ${p.name||'Cis'}.
+
+IDENTITY & ROLE:
+- Name: ${p.name||'Cis'}
+- Current role: ${p.role||'Process Engineer (Core), Prodrive Technologies'}
+- Age & experience: ${p.exp||'24 years old, 3 years experience'}
+- Location: ${p.loc||'Eindhoven, Netherlands'}
+- Industry: ${p.ind||'High-tech manufacturing'}
+
+SITUATION AT WORK:
+- Manager relationship: ${p.mgr||'Hands-off — autonomy but limited guidance'}
+- Informal responsibilities: ${p.inf||'Informally leading support engineering team'}
+- Status & reputation: ${p.stat||'Technically strong, not yet formally recognized as leader'}
+- Recent feedback received: ${p.fb||'Not specified'}
+- Biggest current challenge: ${p.chal||'Not specified'}
+
+GOALS & AMBITIONS:
+- Short-term goal: ${p.goal||'Get promoted to Advanced PE by January 2026'}
+- Long-term ambition: ${p.lgoal||'Become an engineering manager'}
+- Personal goals: ${p.pgoal||'Not specified'}
+- What success looks like in 5 years: ${p.succ||'Not specified'}
+
+DEVELOPMENT:
+- Honest weak spots: ${p.weak||'Direct feedback, delegating, structuring communication'}
+- Genuine strengths: ${p.str||'Not specified'}
+- Learning style: ${p.learn||'Reflecting, doing, reading, discussing'}
+- Currently reading: ${p.read||'Not specified'}
+
+COACHING PREFERENCES:
+- Tone: ${p.tone||'Direct and honest, no sugarcoating'}
+- Management style ambition: ${p.style||'Results-driven but empathetic'}
+- Extra context: ${p.extra||'None'}
+
+YOUR COACHING APPROACH:
+- Be concrete and specific — no generic career advice
+- Reference their actual situation (Prodrive, support team, hands-off manager, January goal)
+- Challenge them when their thinking is off
+- 150-250 words unless asked for more
+- One good follow-up question when relevant
+- Tone matches their preference: direct and honest, no sugarcoating`;
+}
+
+// ── Profile extraction prompt ─────────────────────────────────
+const EXTRACT_SYSTEM = `You are a profile extraction assistant. Your job is to read a coaching conversation and extract any NEW factual information the user has shared about themselves that would update their profile. 
+
+Return ONLY a valid JSON object with ONLY the fields that should be updated based on NEW information in the latest user message. Use these exact field keys:
+name, role, exp, loc, ind, mgr, inf, stat, fb, chal, goal, lgoal, pgoal, succ, weak, str, learn, read, tone, style, extra
+
+Rules:
+- Only include fields where the user shared genuinely new, concrete information
+- Do not include fields where nothing new was said
+- Do not invent or assume information
+- If nothing new was shared, return an empty object: {}
+- Values should be concise but complete sentences
+- Return ONLY the JSON object, no explanation, no markdown
+
+Also watch for personal growth signals and include these special keys if mentioned:
+- "new_book_reading": title of a book they just started reading
+- "new_book_done": title of a book they just finished
+- "new_skill": name of a skill they are learning (include "cat:personal" or "cat:professional" as prefix)
+- "new_habit": a habit they are trying to build
+These special keys will be handled separately from profile fields.`;
+
+// ── Default state ─────────────────────────────────────────────
+const DEFAULT_STATE = {
+  gp: [15, 40, 0, 0, 0],
+  goalNames: ['Get promoted to Advanced PE','Formalize team lead responsibilities','Have career talk with manager','Read Radical Candor','Document 3 wins for January'],
+  goalWhens: ['Jan 2026','Ongoing','4 weeks','1 ch/week','Dec 2025'],
+  goalColors: ['','tl','am','','tl'],
+  chDone: [false, false, false, false],
+  jents: [],
+  streak: 1,
+  lastVisit: '',
+  updateLog: [],
+  books: [],
+  skills: [],
+  pgoals: [],
+  habits: [],
+  personalEntries: [],
+  profile: {
+    name:'Cis', role:'Process Engineer (Core), Prodrive Technologies',
+    exp:'24 years old, 3 years experience', loc:'Eindhoven, Netherlands',
+    ind:'High-tech manufacturing, procurement/supply chain, cable assembly',
+    mgr:'Hands-off — autonomy, but limited guidance or feedback',
+    inf:'Informally leading the support engineering team — Jakub, Janina, and Ireneusz.',
+    stat:'Technically strong and reliable. Not yet formally recognized as a leader.',
+    fb:'', chal:'',
+    goal:'Get promoted to Advanced PE by January 2026. Formalize team lead role. Earn more responsibility and money.',
+    lgoal:'Become a manager — results-driven but empathetic, focused on helping people grow.',
+    pgoal:'', succ:'',
+    weak:'1. Giving direct feedback and difficult conversations\n2. Delegating and letting go of control\n3. Structuring and communicating ideas clearly',
+    str:'', learn:'Reflecting and journaling, doing challenges, reading, discussing',
+    read:'', tone:'Direct and honest — no sugarcoating. Challenge me when my thinking is off.',
+    style:'Results-driven but empathetic — deliver outcomes while genuinely caring for the team.',
+    extra:''
+  }
+};
+
+// ── Persistence ───────────────────────────────────────────────
+const STORE_KEY = 'growcoach_v2';
+
+function saveState() {
+  try {
+    const state = {
+      gp, goalNames, goalWhens, goalColors, chDone, jents, streak, lastVisit, updateLog,
+      books, skills, pgoals, habits, personalEntries,
+      profile: readProfileFromDOM()
+    };
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function readProfileFromDOM() {
+  const ids = ['pfn','pfr','pfe','pfloc','pfind','pfm','pfinf','pfstat','pffb','pfchal','pfg','pflg','pfpg','pfsucc','pfweak','pfstr','pflearn','pfread','pft','pfs','pfelse'];
+  const keys= ['name','role','exp','loc','ind','mgr','inf','stat','fb','chal','goal','lgoal','pgoal','succ','weak','str','learn','read','tone','style','extra'];
+  const p = {};
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) p[keys[i]] = el.value;
+  });
+  return p;
+}
+
+function writeProfileToDOM(p) {
+  const map = {pfn:'name',pfr:'role',pfe:'exp',pfloc:'loc',pfind:'ind',pfm:'mgr',pfinf:'inf',pfstat:'stat',pffb:'fb',pfchal:'chal',pfg:'goal',pflg:'lgoal',pfpg:'pgoal',pfsucc:'succ',pfweak:'weak',pfstr:'str',pflearn:'learn',pfread:'read',pft:'tone',pfs:'style',pfelse:'extra'};
+  for (const [id, key] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el && p[key] !== undefined) el.value = p[key];
+  }
+}
+
+// ── State variables ───────────────────────────────────────────
+let hist = [];
+const saved = loadState();
+const s = saved || DEFAULT_STATE;
+
+let gp         = s.gp;
+let goalNames  = s.goalNames;
+let goalWhens  = s.goalWhens;
+let goalColors = s.goalColors;
+let chDone     = s.chDone;
+let jents      = s.jents;
+let streak     = s.streak;
+let lastVisit  = s.lastVisit;
+let updateLog  = s.updateLog || [];
+let books           = s.books           || [];
+let skills          = s.skills          || [];
+let pgoals          = s.pgoals          || [];
+let habits          = s.habits          || [];
+let personalEntries = s.personalEntries || [];
+
+const prompts = [
+  "Think about the last time someone on your team was struggling. What did you notice, and what did you do — or not do? What would a good manager have done differently?",
+  "When did you last avoid a conversation you knew you should have had? What were you afraid of?",
+  "What is one task you are holding onto that you could delegate? What is the real reason you have not?",
+  "Think of your best manager ever. What specifically made them effective? How far are you from that today?",
+  "You want to be results-driven but empathetic. Think of a recent situation where those two things were in tension. How did you navigate it?",
+  "What would you do differently if you already had the Advanced PE title? What is stopping you from doing those things right now?"
+];
+
+// ── Streak ────────────────────────────────────────────────────
+function updateStreak() {
+  const today = new Date().toDateString();
+  if (lastVisit === today) return;
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (lastVisit === yesterday) streak += 1;
+  else if (lastVisit !== '') streak = 1;
+  lastVisit = today;
+  saveState();
+}
+
+// ── DOM init ──────────────────────────────────────────────────
+function initDOM() {
+  setsk(streak);
+  const glist = document.getElementById('glist');
+  glist.innerHTML = '';
+  for (let i = 0; i < gp.length; i++) glist.appendChild(makeGoalEl(i));
+  for (let i = 0; i < 4; i++) {
+    if (chDone[i]) {
+      const btn = document.getElementById('cb' + i);
+      if (btn) { btn.innerHTML = '<i class="ti ti-check"></i> Done'; btn.classList.add('ck'); btn.disabled = true; document.getElementById('ch' + i).classList.add('done'); }
+    }
+  }
+  renderJournal();
+  updateStats();
+  writeProfileToDOM(s.profile);
+  renderUpdateLog();
+  document.getElementById('jpq').textContent = prompts[Math.floor(Math.random() * prompts.length)];
+  // Personal growth
+  renderBooks();
+  renderSkills();
+  renderPersonalGoals();
+  renderHabits();
+  renderPersonalEntries();
+  updatePersonalStats();
+  updateHomeCards();
+}
+
+function makeGoalEl(i) {
+  const div = document.createElement('div');
+  div.className = 'gi'; div.id = 'goal-item-' + i;
+  const pct = gp[i], cc = goalColors[i] || '';
+  const lbl = pct >= 100 ? '100% complete!' : pct + '% — ' + goalLabel(i);
+  div.innerHTML = '<div class="gt"><span class="gname">'+es(goalNames[i])+'</span><span class="gwhen">'+es(goalWhens[i])+'</span></div><div class="pbar"><div class="pfill '+cc+'" id="gp'+i+'" style="width:'+pct+'%"></div></div><div class="gbot"><span class="gpct" id="gl'+i+'">'+lbl+'</span><button class="bsm" onclick="bump('+i+')">+10%</button></div>';
+  return div;
+}
+
+function goalLabel(i) {
+  return ['in progress','leading informally','high priority','in progress','in progress'][i] || 'in progress';
+}
+
+function updateStats() {
+  document.getElementById('gdn').textContent = gp.filter(x => x >= 100).length;
+  document.getElementById('cdn').textContent = chDone.filter(Boolean).length;
+  document.getElementById('jdn').textContent = jents.length;
+}
+
+function renderJournal() {
+  const c = document.getElementById('jents');
+  if (!jents.length) { c.innerHTML = '<div style="font-size:14px;color:var(--t2)">No entries yet.</div>'; return; }
+  c.innerHTML = jents.map(e => '<div class="jent"><div class="jdate">'+e.date+'</div><div class="jtxt">'+es(e.text)+'</div></div>').join('');
+}
+
+function renderUpdateLog() {
+  const el = document.getElementById('update-log');
+  if (!el) return;
+  if (!updateLog.length) {
+    el.textContent = 'No automatic updates yet. Start chatting and your profile will update as you share new information.';
+    return;
+  }
+  el.innerHTML = updateLog.slice(0,10).map(u =>
+    '<div style="padding:6px 0;border-bottom:.5px solid var(--bd0)"><span style="font-size:11px;color:var(--t2)">'+u.date+'</span><br>'+es(u.summary)+'</div>'
+  ).join('');
+}
+
+// ── Sidebar ───────────────────────────────────────────────────
+function openSide()   { document.getElementById('sb').classList.add('open');   document.getElementById('ov').classList.add('show'); }
+function closeSide()  { document.getElementById('sb').classList.remove('open'); document.getElementById('ov').classList.remove('show'); }
+function toggleSide() { document.getElementById('sb').classList.contains('open') ? closeSide() : openSide(); }
+
+function nav(id) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  const nb = document.getElementById('nb-' + id); if (nb) nb.classList.add('on');
+  document.getElementById('pg-' + id).scrollTop = 0;
+  if (window.innerWidth < 700) closeSide();
+}
+
+function setsk(n) { document.getElementById('sk-n').textContent = n; document.getElementById('sk-pill').textContent = n; }
+function ck(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sc(); } }
+function qs(t) { nav('chat'); document.getElementById('cin').value = t; sc(); }
+function genCh() { nav('chat'); document.getElementById('cin').value = 'Give me a new micro-challenge for my current weak spots'; sc(); }
+function es(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── API call helper ───────────────────────────────────────────
+async function callAPI(messages, system, maxTokens) {
+  const endpoint = (WORKER_URL && WORKER_URL !== 'YOUR_WORKER_URL_HERE')
+    ? WORKER_URL
+    : 'https://api.anthropic.com/v1/messages';
+  const r = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens || 1000, system, messages })
+  });
+  return await r.json();
+}
+
+// ── Profile auto-update (runs silently after each user message) ───────────────
+async function extractAndUpdateProfile(userMessage) {
+  try {
+    const p = readProfileFromDOM();
+    const convSummary = hist.slice(-6).map(m => m.role.toUpperCase() + ': ' + m.content).join('\n');
+    const extractMsg = `Current profile summary:\nName: ${p.name}, Role: ${p.role}, Goal: ${p.goal}\nRecent feedback: ${p.fb||'none'}, Current challenge: ${p.chal||'none'}\n\nLatest conversation:\n${convSummary}\n\nLatest user message: "${userMessage}"\n\nExtract any NEW profile information from the latest user message only.`;
+
+    const d = await callAPI([{ role: 'user', content: extractMsg }], EXTRACT_SYSTEM, 500);
+    const raw = d.content.map(c => c.text || '').join('').trim();
+
+    // Parse JSON safely
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return;
+    const updates = JSON.parse(jsonMatch[0]);
+    if (!updates || Object.keys(updates).length === 0) return;
+
+    // Apply updates to profile
+    const keyToId = { name:'pfn', role:'pfr', exp:'pfe', loc:'pfloc', ind:'pfind', mgr:'pfm', inf:'pfinf', stat:'pfstat', fb:'pffb', chal:'pfchal', goal:'pfg', lgoal:'pflg', pgoal:'pfpg', succ:'pfsucc', weak:'pfweak', str:'pfstr', learn:'pflearn', read:'pfread', tone:'pft', style:'pfs', extra:'pfelse' };
+
+    const updatedFields = [];
+    for (const [key, val] of Object.entries(updates)) {
+      const id = keyToId[key];
+      if (id) {
+        const el = document.getElementById(id);
+        if (el) { el.value = val; updatedFields.push(key); }
+      }
+    }
+
+    // Handle personal growth signals
+    const pgSignals = [];
+    if (updates.new_book_reading) {
+      const existing = books.find(b => b.title.toLowerCase() === updates.new_book_reading.toLowerCase());
+      if (!existing) { books.push({ id: Date.now(), title: updates.new_book_reading, author: '', status: 'reading', note: '' }); renderBooks(); updateHomeCards(); pgSignals.push('Added "' + updates.new_book_reading + '" to reading'); }
+      delete updates.new_book_reading;
+    }
+    if (updates.new_book_done) {
+      const existing = books.find(b => b.title.toLowerCase() === updates.new_book_done.toLowerCase());
+      if (existing) { existing.status = 'done'; } else { books.push({ id: Date.now(), title: updates.new_book_done, author: '', status: 'done', note: '' }); }
+      renderBooks(); updateHomeCards(); pgSignals.push('Marked "' + updates.new_book_done + '" as finished');
+      delete updates.new_book_done;
+    }
+    if (updates.new_skill) {
+      const raw = updates.new_skill;
+      const cat = raw.startsWith('cat:personal') ? 'personal' : 'professional';
+      const name = raw.replace(/^cat:(personal|professional)\s*/,'').trim();
+      if (name && !skills.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+        skills.push({ id: Date.now(), name, cat, how: '', pct: 0 });
+        renderSkills(); updatePersonalStats(); updateHomeCards(); pgSignals.push('Added skill: ' + name);
+      }
+      delete updates.new_skill;
+    }
+    if (updates.new_habit) {
+      const name = updates.new_habit;
+      if (name && !habits.find(h => h.name.toLowerCase() === name.toLowerCase())) {
+        habits.push({ name, streak: 0, lastDone: '' });
+        renderHabits(); pgSignals.push('Added habit: ' + name);
+      }
+      delete updates.new_habit;
+    }
+
+    if (updatedFields.length > 0 || pgSignals.length > 0) {
+      // Log the update
+      const fieldLabels = { name:'Name', role:'Role', exp:'Experience', loc:'Location', ind:'Industry', mgr:'Manager relationship', inf:'Informal responsibilities', stat:'Status', fb:'Recent feedback', chal:'Current challenge', goal:'Short-term goal', lgoal:'Long-term ambition', pgoal:'Personal goals', succ:'5-year vision', weak:'Weak spots', str:'Strengths', learn:'Learning style', read:'Currently reading', tone:'Coaching tone', style:'Management style', extra:'Extra context' };
+      const allUpdates = [...updatedFields.map(f => fieldLabels[f] || f), ...pgSignals];
+      const summary = 'Updated: ' + allUpdates.join(', ');
+      const now = new Date().toLocaleDateString('nl-NL', { day:'numeric', month:'short', year:'numeric' });
+      updateLog.unshift({ date: now, summary });
+      if (updateLog.length > 20) updateLog.pop();
+      renderUpdateLog();
+
+      // Show subtle notification
+      showProfileUpdateNotice(allUpdates.length);
+      saveState();
+    }
+  } catch(e) {
+    // Silent fail — profile extraction is best-effort
+    console.log('Profile extraction skipped:', e.message);
+  }
+}
+
+function showProfileUpdateNotice(count) {
+  let notice = document.getElementById('profile-update-notice');
+  if (!notice) {
+    notice = document.createElement('div');
+    notice.id = 'profile-update-notice';
+    notice.style.cssText = 'position:fixed;bottom:80px;right:16px;background:var(--teal);color:#fff;font-size:12.5px;padding:8px 14px;border-radius:20px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;font-family:var(--f)';
+    document.body.appendChild(notice);
+  }
+  notice.textContent = '✓ Profile updated (' + count + ' field' + (count > 1 ? 's' : '') + ')';
+  notice.style.opacity = '1';
+  setTimeout(() => notice.style.opacity = '0', 3000);
+}
+
+// ── Chat ──────────────────────────────────────────────────────
+async function sc() {
+  const inp = document.getElementById('cin');
+  const txt = inp.value.trim(); if (!txt) return;
+  const btn = document.getElementById('bsnd');
+  btn.disabled = true; inp.value = ''; inp.style.height = 'auto';
+  const box = document.getElementById('cmsgs');
+
+  const ud = document.createElement('div'); ud.className = 'mw u';
+  ud.innerHTML = '<div class="mwho" style="text-align:right">you</div><div class="msg us">' + es(txt) + '</div>';
+  box.appendChild(ud);
+
+  const td = document.createElement('div'); td.className = 'mw';
+  td.innerHTML = '<div class="mwho">your coach</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  box.appendChild(td);
+  box.scrollTop = box.scrollHeight;
+
+  hist.push({ role: 'user', content: txt });
+
+  try {
+    const p = readProfileFromDOM();
+    const d = await callAPI(hist, buildSystem(p), 1000);
+    const rep = d.content.map(c => c.text || '').join('');
+    hist.push({ role: 'assistant', content: rep });
+    td.innerHTML = '<div class="mwho">your coach</div><div class="msg co">' + es(rep).replace(/\n/g, '<br>') + '</div>';
+
+    // Run profile extraction silently in background
+    extractAndUpdateProfile(txt);
+
+  } catch(e) {
+    td.innerHTML = '<div class="mwho">your coach</div><div class="msg co">Connection issue — check your Worker URL in the app settings, or try again in a moment.</div>';
+  }
+
+  box.scrollTop = box.scrollHeight;
+  btn.disabled = false;
+  inp.focus();
+}
+
+// ── Goals ─────────────────────────────────────────────────────
+function bump(i) {
+  gp[i] = Math.min(100, gp[i] + 10);
+  document.getElementById('gp' + i).style.width = gp[i] + '%';
+  document.getElementById('gl' + i).textContent = gp[i] >= 100 ? '100% complete!' : gp[i] + '% — ' + goalLabel(i);
+  updateStats(); saveState();
+}
+function addGoal() {
+  const inp = document.getElementById('newg');
+  const txt = inp.value.trim(); if (!txt) return;
+  const i = gp.length; gp.push(0); goalNames.push(txt); goalWhens.push('New'); goalColors.push('');
+  document.getElementById('glist').appendChild(makeGoalEl(i));
+  inp.value = ''; updateStats(); saveState();
+}
+
+// ── Challenges ────────────────────────────────────────────────
+function markDone(i) {
+  const btn = document.getElementById('cb' + i);
+  btn.innerHTML = '<i class="ti ti-check"></i> Done'; btn.classList.add('ck'); btn.disabled = true;
+  document.getElementById('ch' + i).classList.add('done');
+  chDone[i] = true; streak++; setsk(streak); updateStats(); saveState();
+}
+
+// ── Journal ───────────────────────────────────────────────────
+function saveJ() {
+  const txt = document.getElementById('jarea').value.trim(); if (!txt) return;
+  const now = new Date().toLocaleDateString('nl-NL', { day:'numeric', month:'long', year:'numeric' });
+  jents.unshift({ date: now, text: txt });
+  document.getElementById('jarea').value = '';
+  renderJournal(); updateStats(); saveState();
+}
+
+// ── Prep ──────────────────────────────────────────────────────
+async function doPrep() {
+  const type = document.getElementById('ptype').value;
+  const ctx  = document.getElementById('pctx').value.trim();
+  if (!ctx) { alert('Describe the situation first.'); return; }
+  const out = document.getElementById('pout'), bod = document.getElementById('pbod');
+  out.style.display = 'block';
+  bod.innerHTML = '<div class="typing" style="width:fit-content"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  const p = readProfileFromDOM();
+  const pr = `${p.name||'Cis'} needs to prepare for: "${type}". Context: ${ctx}\n\nDirect practical prep guide:\n1. What ${p.name||'Cis'} actually wants to achieve\n2. How to open (give a literal first sentence)\n3. 3-4 key points\n4. Likely pushback and how to respond\n5. What NOT to say or do\n\nBe direct. Reference their actual situation. No generic advice.`;
+  try {
+    const d = await callAPI([{ role:'user', content:pr }], buildSystem(p), 1000);
+    bod.innerHTML = es(d.content.map(c => c.text||'').join('')).replace(/\n/g,'<br>');
+  } catch(e) { bod.innerHTML = 'Connection issue — try again.'; }
+}
+
+// ── Profile ───────────────────────────────────────────────────
+function savePro() {
+  saveState();
+  const m = document.getElementById('svd');
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 2500);
+}
+
+// ── Auto-save on field change ─────────────────────────────────
+['pfn','pfr','pfe','pfloc','pfind','pfm','pfinf','pfstat','pffb','pfchal','pfg','pflg','pfpg','pfsucc','pfweak','pfstr','pflearn','pfread','pft','pfs','pfelse'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', saveState);
+});
+
+// ── Chat textarea auto-resize ─────────────────────────────────
+document.getElementById('cin').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 110) + 'px';
+});
+
+// ── Boot ──────────────────────────────────────────────────────
+updateStreak();
+initDOM();
+
+// ════════════════════════════════════════════════════════════════
+// PERSONAL GROWTH — Books, Skills, Personal Goals, Habits
+// ════════════════════════════════════════════════════════════════
+
+// ── Personal state (merged into saveState/loadState) ─────────────────────────
+// These are added to DEFAULT_STATE below via patch
+
+// ── Books ─────────────────────────────────────────────────────────────────────
+function addBook() {
+  const title  = document.getElementById('book-title-in').value.trim();
+  const author = document.getElementById('book-author-in').value.trim();
+  const status = document.getElementById('book-status-in').value;
+  const note   = document.getElementById('book-note-in').value.trim();
+  if (!title) { alert('Please enter a title.'); return; }
+  const book = { id: Date.now(), title, author, status, note };
+  books.push(book);
+  document.getElementById('book-title-in').value  = '';
+  document.getElementById('book-author-in').value = '';
+  document.getElementById('book-note-in').value   = '';
+  renderBooks();
+  updatePersonalStats();
+  updateHomeCards();
+  saveState();
+}
+
+function setBookStatus(id, status) {
+  const b = books.find(b => b.id === id);
+  if (b) { b.status = status; renderBooks(); updatePersonalStats(); updateHomeCards(); saveState(); }
+}
+
+function deleteBook(id) {
+  books = books.filter(b => b.id !== id);
+  renderBooks(); updatePersonalStats(); updateHomeCards(); saveState();
+}
+
+let currentBookTab = 'reading';
+function switchBookTab(tab) {
+  currentBookTab = tab;
+  document.querySelectorAll('#pg-books .ptab').forEach((t,i) => {
+    const tabs = ['reading','done','want','all'];
+    t.classList.toggle('on', tabs[i] === tab);
+  });
+  document.querySelectorAll('#pg-books .ptab-panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('book-panel-' + tab).classList.add('on');
+}
+
+function renderBooks() {
+  const panels = { reading: 'books-reading', done: 'books-done', want: 'books-want', all: 'books-all' };
+  for (const [status, elId] of Object.entries(panels)) {
+    const el = document.getElementById(elId); if (!el) continue;
+    const filtered = status === 'all' ? books : books.filter(b => b.status === status);
+    el.innerHTML = filtered.map(b => bookCardHTML(b)).join('');
+    const emptyEl = document.getElementById(elId + '-empty');
+    if (emptyEl) emptyEl.style.display = filtered.length ? 'none' : 'block';
+  }
+}
+
+function bookCardHTML(b) {
+  const statusLabels = { reading: 'Reading now', done: 'Finished', want: 'Want to read' };
+  const statusClass  = { reading: 'reading', done: 'done', want: 'want' };
+  return '<div class="book-card">' +
+    '<div class="book-status ' + statusClass[b.status] + '">' + statusLabels[b.status] + '</div>' +
+    '<div class="book-title">' + es(b.title) + '</div>' +
+    (b.author ? '<div class="book-author">' + es(b.author) + '</div>' : '') +
+    (b.note   ? '<div class="book-note">'   + es(b.note)   + '</div>' : '') +
+    '<div class="book-actions">' +
+    (b.status !== 'reading' ? '<button class="btag-btn" onclick="setBookStatus(' + b.id + ','reading')">Reading</button>' : '<button class="btag-btn active-reading" onclick="setBookStatus(' + b.id + ','reading')">Reading</button>') +
+    (b.status !== 'done'    ? '<button class="btag-btn" onclick="setBookStatus(' + b.id + ','done')">Done</button>'       : '<button class="btag-btn active-done"    onclick="setBookStatus(' + b.id + ','done')">Done ✓</button>') +
+    (b.status !== 'want'    ? '<button class="btag-btn" onclick="setBookStatus(' + b.id + ','want')">Want</button>'       : '') +
+    '<button class="btag-btn" onclick="deleteBook(' + b.id + ')" style="color:var(--t2)">Remove</button>' +
+    '</div></div>';
+}
+
+// ── Skills ────────────────────────────────────────────────────────────────────
+function addSkill() {
+  const name = document.getElementById('skill-name-in').value.trim();
+  const cat  = document.getElementById('skill-cat-in').value;
+  const how  = document.getElementById('skill-how-in').value.trim();
+  if (!name) { alert('Enter a skill name.'); return; }
+  const skill = { id: Date.now(), name, cat, how, pct: 0 };
+  skills.push(skill);
+  document.getElementById('skill-name-in').value = '';
+  document.getElementById('skill-how-in').value  = '';
+  renderSkills(); updatePersonalStats(); updateHomeCards(); saveState();
+}
+
+function bumpSkill(id) {
+  const sk = skills.find(s => s.id === id);
+  if (sk) { sk.pct = Math.min(100, sk.pct + 10); renderSkills(); updatePersonalStats(); saveState(); }
+}
+
+function deleteSkill(id) {
+  skills = skills.filter(s => s.id !== id);
+  renderSkills(); updatePersonalStats(); updateHomeCards(); saveState();
+}
+
+let currentSkillTab = 'all';
+function switchSkillTab(tab) {
+  currentSkillTab = tab;
+  document.querySelectorAll('#pg-skills .ptab').forEach((t,i) => {
+    const tabs = ['all','professional','personal','completed'];
+    t.classList.toggle('on', tabs[i] === tab);
+  });
+  document.querySelectorAll('#pg-skills .ptab-panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('skill-panel-' + tab).classList.add('on');
+}
+
+function renderSkills() {
+  const panels = { all: skills, professional: skills.filter(s => s.cat==='professional'), personal: skills.filter(s => s.cat==='personal'), completed: skills.filter(s => s.pct>=100) };
+  let anySkills = false;
+  for (const [key, list] of Object.entries(panels)) {
+    const el = document.getElementById('skills-' + key); if (!el) continue;
+    el.innerHTML = list.map(s => skillItemHTML(s)).join('');
+    if (key === 'all' && list.length > 0) anySkills = true;
+  }
+  const emptyEl = document.getElementById('skills-empty');
+  if (emptyEl) emptyEl.style.display = anySkills ? 'none' : 'block';
+}
+
+function skillItemHTML(s) {
+  const catLabel = s.cat === 'professional' ? 'Professional' : 'Personal';
+  const pctLabel = s.pct >= 100 ? 'Mastered!' : s.pct + '% proficiency';
+  return '<div class="skill-item">' +
+    '<div class="skill-top"><span class="skill-name">' + es(s.name) + '</span><span class="skill-cat">' + catLabel + '</span></div>' +
+    (s.how ? '<div style="font-size:12.5px;color:var(--t1);margin-bottom:8px">How: ' + es(s.how) + '</div>' : '') +
+    '<div class="pbar"><div class="pfill" style="width:' + s.pct + '%;background:' + (s.cat==='personal'?'var(--teal)':'var(--a)') + '"></div></div>' +
+    '<div class="skill-bot"><span class="skill-pct">' + pctLabel + '</span>' +
+    '<div style="display:flex;gap:7px">' +
+    (s.pct < 100 ? '<button class="bsm" onclick="bumpSkill(' + s.id + ')">+10%</button>' : '') +
+    '<button class="bsm" onclick="deleteSkill(' + s.id + ')" style="color:var(--t2)">Remove</button>' +
+    '</div></div></div>';
+}
+
+// ── Personal goals ────────────────────────────────────────────────────────────
+function addPersonalGoal() {
+  const txt = document.getElementById('new-pgoal').value.trim();
+  if (!txt) return;
+  const i = pgoals.length;
+  pgoals.push({ name: txt, pct: 0 });
+  document.getElementById('new-pgoal').value = '';
+  renderPersonalGoals(); updatePersonalStats(); updateHomeCards(); saveState();
+}
+
+function bumpPgoal(i) {
+  if (pgoals[i]) { pgoals[i].pct = Math.min(100, pgoals[i].pct + 10); renderPersonalGoals(); updatePersonalStats(); saveState(); }
+}
+
+function renderPersonalGoals() {
+  const list = document.getElementById('pgoal-list'); if (!list) return;
+  if (!pgoals.length) { list.innerHTML = '<div style="font-size:14px;color:var(--t2);margin-bottom:12px">No personal goals yet. Add one below.</div>'; return; }
+  list.innerHTML = pgoals.map((g, i) => {
+    const lbl = g.pct >= 100 ? '100% — achieved!' : g.pct + '% — in progress';
+    return '<div class="gi"><div class="gt"><span class="gname">' + es(g.name) + '</span></div>' +
+      '<div class="pbar"><div class="pfill tl" style="width:' + g.pct + '%"></div></div>' +
+      '<div class="gbot"><span class="gpct">' + lbl + '</span><button class="bsm" onclick="bumpPgoal(' + i + ')">+10%</button></div></div>';
+  }).join('');
+  document.getElementById('pg-goals-n').textContent = pgoals.filter(g => g.pct >= 100).length;
+}
+
+// ── Habits ────────────────────────────────────────────────────────────────────
+function addHabit() {
+  const txt = document.getElementById('new-habit').value.trim();
+  if (!txt) return;
+  habits.push({ name: txt, streak: 0, lastDone: '' });
+  document.getElementById('new-habit').value = '';
+  renderHabits(); saveState();
+}
+
+function checkHabit(i) {
+  const today = new Date().toDateString();
+  if (habits[i].lastDone === today) return; // already done today
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  habits[i].streak = habits[i].lastDone === yesterday ? habits[i].streak + 1 : 1;
+  habits[i].lastDone = today;
+  renderHabits(); saveState();
+}
+
+function deleteHabit(i) {
+  habits.splice(i, 1);
+  renderHabits(); saveState();
+}
+
+function renderHabits() {
+  const list = document.getElementById('habit-list'); if (!list) return;
+  if (!habits.length) { list.innerHTML = '<div style="font-size:14px;color:var(--t2)">No habits tracked yet.</div>'; return; }
+  list.innerHTML = habits.map((h, i) => {
+    const today = new Date().toDateString();
+    const doneTd = h.lastDone === today;
+    return '<div class="gi" style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+      '<div style="flex:1"><div class="gname">' + es(h.name) + '</div>' +
+      '<div style="font-size:12px;color:var(--t2);margin-top:3px">' + h.streak + ' day streak</div></div>' +
+      '<div style="display:flex;gap:7px">' +
+      '<button class="bsm ' + (doneTd ? 'checked' : '') + '" onclick="checkHabit(' + i + ')" style="' + (doneTd ? 'background:var(--teal);color:#fff;border-color:var(--teal)' : '') + '">' + (doneTd ? '✓ Done' : 'Check in') + '</button>' +
+      '<button class="bsm" onclick="deleteHabit(' + i + ')" style="color:var(--t2)">Remove</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+// ── Personal reflections ──────────────────────────────────────────────────────
+function savePersonalEntry() {
+  const txt = document.getElementById('personal-area').value.trim(); if (!txt) return;
+  const now = new Date().toLocaleDateString('nl-NL', { day:'numeric', month:'long', year:'numeric' });
+  personalEntries.unshift({ date: now, text: txt });
+  document.getElementById('personal-area').value = '';
+  renderPersonalEntries(); saveState();
+}
+
+function renderPersonalEntries() {
+  const c = document.getElementById('personal-entries'); if (!c) return;
+  if (!personalEntries.length) { c.innerHTML = '<div style="font-size:14px;color:var(--t2)">No reflections yet.</div>'; return; }
+  c.innerHTML = personalEntries.map(e => '<div class="jent"><div class="jdate">' + e.date + '</div><div class="jtxt">' + es(e.text) + '</div></div>').join('');
+}
+
+// ── Personal stats & home cards ────────────────────────────────────────────────
+function updatePersonalStats() {
+  const booksRead = books.filter(b => b.status === 'done').length;
+  const skillsActive = skills.filter(s => s.pct < 100).length;
+  const pgoalsDone = pgoals.filter(g => g.pct >= 100).length;
+  const el1 = document.getElementById('pg-goals-n'); if (el1) el1.textContent = pgoalsDone;
+  const el2 = document.getElementById('pg-books-n'); if (el2) el2.textContent = booksRead;
+  const el3 = document.getElementById('pg-skills-n'); if (el3) el3.textContent = skillsActive;
+}
+
+function updateHomeCards() {
+  // Books card
+  const reading = books.filter(b => b.status === 'reading');
+  const done    = books.filter(b => b.status === 'done');
+  const htit = document.getElementById('home-books-reading');
+  const hsub = document.getElementById('home-books-count');
+  if (htit) htit.textContent = reading.length ? reading[0].title + (reading.length > 1 ? ' +' + (reading.length-1) + ' more' : '') : 'No books in progress';
+  if (hsub) hsub.textContent = done.length + ' finished · tap to manage your reading list';
+
+  // Skills card
+  const active = skills.filter(s => s.pct < 100);
+  const stit = document.getElementById('home-skills-active');
+  const ssub = document.getElementById('home-skills-count');
+  if (stit) stit.textContent = active.length ? active[0].name + (active.length > 1 ? ' +' + (active.length-1) + ' more' : '') : 'No skills tracked yet';
+  if (ssub) ssub.textContent = skills.filter(s => s.pct >= 100).length + ' completed · tap to manage skills';
+
+  // Personal goals card
+  const ptit = document.getElementById('home-pgoals-title');
+  const psub = document.getElementById('home-pgoals-sub');
+  if (pgoals.length && ptit) {
+    const active2 = pgoals.filter(g => g.pct < 100);
+    ptit.textContent = active2.length ? active2[0].name + (active2.length > 1 ? ' +' + (active2.length-1) + ' more' : '') : pgoals[0].name;
+    if (psub) psub.textContent = pgoals.filter(g => g.pct >= 100).length + ' achieved · ' + pgoals.filter(g => g.pct < 100).length + ' in progress';
+  }
+}
+
+const personalPrompts = [
+  "Outside of work, what kind of person do you want to become in the next 5 years? What does that person do differently from who you are today?",
+  "What is one habit you have been meaning to build but keep putting off? What is really stopping you?",
+  "What skill are you most proud of developing recently — and how did you do it?",
+  "If you had one free day per week with no obligations, what would you spend it on? What does that tell you about what you value?",
+  "What does a good week look like for you outside of work? Are your recent weeks matching that picture?",
+  "Who in your personal life inspires you most, and what specifically do you admire about them?"
+];
+const ppEl = document.getElementById('personal-prompt');
+if (ppEl) ppEl.textContent = personalPrompts[Math.floor(Math.random() * personalPrompts.length)];
+
+</script>
+</body>
+</html>
