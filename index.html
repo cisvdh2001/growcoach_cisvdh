@@ -773,23 +773,27 @@ async function sbSignOut() {
 }
 
 async function sbLoadData() {
-  if (!accessToken) return null;
+  if (!accessToken || !currentUser) return null;
   const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=data', {
     headers: sbHeaders({ 'Accept': 'application/json' })
   });
+  if (!r.ok) {
+    console.warn('Cloud load HTTP error:', r.status);
+    return null;
+  }
   const rows = await r.json();
-  if (rows && rows.length > 0 && rows[0].data) return rows[0].data;
+  if (Array.isArray(rows) && rows.length > 0 && rows[0].data) return rows[0].data;
   return null;
 }
 
 async function sbSaveData(state) {
-  if (!accessToken) return;
+  if (!accessToken || !currentUser) return;
   showSyncing(true);
   try {
-    await fetch(SUPABASE_REST + '/user_data', {
+    const r = await fetch(SUPABASE_REST + '/user_data', {
       method: 'POST',
       headers: sbHeaders({
-        'Prefer': 'resolution=merge-duplicates'
+        'Prefer': 'return=minimal,resolution=merge-duplicates'
       }),
       body: JSON.stringify({
         id: currentUser,
@@ -797,7 +801,13 @@ async function sbSaveData(state) {
         updated_at: new Date().toISOString()
       })
     });
-  } catch(e) { console.warn('Cloud save failed:', e); }
+    if (!r.ok) {
+      const txt = await r.text();
+      console.warn('Cloud save HTTP error:', r.status, txt);
+    }
+  } catch(e) {
+    console.warn('Cloud save failed:', e);
+  }
   showSyncing(false);
 }
 
@@ -809,9 +819,9 @@ function showSyncing(active) {
 }
 
 // Session persistence in localStorage
-function saveSession(user, token) {
+function saveSession(user, token, email) {
   try {
-    localStorage.setItem('gc_session', JSON.stringify({ user, token }));
+    localStorage.setItem('gc_session', JSON.stringify({ user, token, email: email||'' }));
   } catch(e) {}
 }
 function loadSession() {
@@ -963,11 +973,12 @@ async function loadCloudState() {
 }
 
 function applyState(s) {
-  gp              = s.gp              || DEFAULT_STATE.gp;
-  goalNames       = s.goalNames       || DEFAULT_STATE.goalNames;
-  goalWhens       = s.goalWhens       || DEFAULT_STATE.goalWhens;
-  goalColors      = s.goalColors      || DEFAULT_STATE.goalColors;
-  chDone          = s.chDone          || DEFAULT_STATE.chDone;
+  if (!s) s = DEFAULT_STATE;
+  gp              = s.gp              || DEFAULT_STATE.gp.slice();
+  goalNames       = s.goalNames       || DEFAULT_STATE.goalNames.slice();
+  goalWhens       = s.goalWhens       || DEFAULT_STATE.goalWhens.slice();
+  goalColors      = s.goalColors      || DEFAULT_STATE.goalColors.slice();
+  chDone          = s.chDone          || [false,false,false,false];
   jents           = s.jents           || [];
   streak          = s.streak          || 1;
   lastVisit       = s.lastVisit       || '';
@@ -977,8 +988,11 @@ function applyState(s) {
   pgoals          = s.pgoals          || [];
   habits          = s.habits          || [];
   personalEntries = s.personalEntries || [];
+  // Write profile to DOM fields
   writeProfileToDOM(s.profile || DEFAULT_STATE.profile);
+  // Update streak counter
   updateStreak();
+  // Render everything
   initDOM();
 }
 async function loadCloudState() {
@@ -990,11 +1004,12 @@ async function loadCloudState() {
 }
 
 function applyState(s) {
-  gp              = s.gp              || DEFAULT_STATE.gp;
-  goalNames       = s.goalNames       || DEFAULT_STATE.goalNames;
-  goalWhens       = s.goalWhens       || DEFAULT_STATE.goalWhens;
-  goalColors      = s.goalColors      || DEFAULT_STATE.goalColors;
-  chDone          = s.chDone          || DEFAULT_STATE.chDone;
+  if (!s) s = DEFAULT_STATE;
+  gp              = s.gp              || DEFAULT_STATE.gp.slice();
+  goalNames       = s.goalNames       || DEFAULT_STATE.goalNames.slice();
+  goalWhens       = s.goalWhens       || DEFAULT_STATE.goalWhens.slice();
+  goalColors      = s.goalColors      || DEFAULT_STATE.goalColors.slice();
+  chDone          = s.chDone          || [false,false,false,false];
   jents           = s.jents           || [];
   streak          = s.streak          || 1;
   lastVisit       = s.lastVisit       || '';
@@ -1004,8 +1019,11 @@ function applyState(s) {
   pgoals          = s.pgoals          || [];
   habits          = s.habits          || [];
   personalEntries = s.personalEntries || [];
+  // Write profile to DOM fields
   writeProfileToDOM(s.profile || DEFAULT_STATE.profile);
+  // Update streak counter
   updateStreak();
+  // Render everything
   initDOM();
 }
 
@@ -1071,20 +1089,32 @@ function updateStreak() {
 // ── DOM init ──────────────────────────────────────────────────
 function initDOM() {
   setsk(streak);
+  // Rebuild goals list
   const glist = document.getElementById('glist');
-  glist.innerHTML = '';
-  for (let i = 0; i < gp.length; i++) glist.appendChild(makeGoalEl(i));
+  if (glist) {
+    glist.innerHTML = '';
+    for (let i = 0; i < gp.length; i++) glist.appendChild(makeGoalEl(i));
+  }
+  // Restore challenge done states
   for (let i = 0; i < 4; i++) {
     if (chDone[i]) {
       const btn = document.getElementById('cb' + i);
-      if (btn) { btn.innerHTML = '<i class="ti ti-check"></i> Done'; btn.classList.add('ck'); btn.disabled = true; document.getElementById('ch' + i).classList.add('done'); }
+      const card = document.getElementById('ch' + i);
+      if (btn) { btn.innerHTML = '<i class="ti ti-check"></i> Done'; btn.classList.add('ck'); btn.disabled = true; }
+      if (card) card.classList.add('done');
+    } else {
+      // Reset in case we're re-rendering after cloud load
+      const btn = document.getElementById('cb' + i);
+      const card = document.getElementById('ch' + i);
+      if (btn && btn.classList.contains('ck')) { btn.innerHTML = '<i class="ti ti-check"></i> Mark complete'; btn.classList.remove('ck'); btn.disabled = false; }
+      if (card) card.classList.remove('done');
     }
   }
   renderJournal();
   updateStats();
-  writeProfileToDOM(s.profile);
   renderUpdateLog();
-  document.getElementById('jpq').textContent = prompts[Math.floor(Math.random() * prompts.length)];
+  const jpq = document.getElementById('jpq');
+  if (jpq) jpq.textContent = prompts[Math.floor(Math.random() * prompts.length)];
   // Personal growth
   renderBooks();
   renderSkills();
@@ -1539,7 +1569,7 @@ async function signUp() {
 }
 async function onSignedIn(token, userId, email) {
   accessToken = token; currentUser = userId;
-  saveSession(userId, token);
+  saveSession(userId, token, email);
   const emailEl = document.getElementById('user-email-display');
   if (emailEl) emailEl.textContent = email;
   const cloud = await loadCloudState();
@@ -1572,14 +1602,17 @@ function _boot() {
   const session = loadSession();
   if (session && session.token && session.user) {
     accessToken = session.token; currentUser = session.user;
+    // Restore email display
+    const emailEl = document.getElementById('user-email-display');
+    if (emailEl && session.email) emailEl.textContent = session.email;
     loadCloudState().then(cloud => {
       applyState(cloud || loadState() || DEFAULT_STATE);
       const ov = document.getElementById('auth-overlay');
       if (ov) ov.style.display = 'none';
     }).catch(() => {
+      // Token may be expired — clear session and show login
+      clearSession();
       applyState(loadState() || DEFAULT_STATE);
-      const ov = document.getElementById('auth-overlay');
-      if (ov) ov.style.display = 'none';
     });
   } else {
     applyState(loadState() || DEFAULT_STATE);
