@@ -857,10 +857,13 @@ async function sbLoadData() {
 async function sbSaveData(state) {
   if (!accessToken || !currentUser) { dbLog && dbLog('sbSaveData skipped — not signed in'); return; }
   showSyncing(true);
-  const doSave = async () => fetch(SUPABASE_REST + '/user_data', {
+  const payload = JSON.stringify({ id: currentUser, data: state, updated_at: new Date().toISOString() });
+  const doSave = async () => fetch(SUPABASE_REST + '/user_data?on_conflict=id', {
     method: 'POST',
-    headers: sbHeaders({ 'Prefer': 'return=minimal,resolution=merge-duplicates' }),
-    body: JSON.stringify({ id: currentUser, data: state, updated_at: new Date().toISOString() })
+    headers: sbHeaders({
+      'Prefer': 'return=minimal,resolution=merge-duplicates'
+    }),
+    body: payload
   });
   try {
     let r = await doSave();
@@ -869,9 +872,13 @@ async function sbSaveData(state) {
       if (ok) { r = await doSave(); }
       else { clearSession(); accessToken=null; currentUser=null; showSyncing(false); return; }
     }
-    if (!r.ok) { const t=await r.text(); dbLog && dbLog('Save error '+r.status+': '+t.substring(0,120)); }
-    else { dbLog && dbLog('Cloud save OK'); }
-  } catch(e) { dbLog && dbLog('Save exception: '+e.message); }
+    if (!r.ok) {
+      const t = await r.text();
+      dbLog && dbLog('Save error ' + r.status + ': ' + t.substring(0,200));
+    } else {
+      dbLog && dbLog('Cloud save OK (' + r.status + ')');
+    }
+  } catch(e) { dbLog && dbLog('Save exception: ' + e.message); }
   showSyncing(false);
 }
 
@@ -1525,10 +1532,10 @@ async function runDiagnostics() {
 
     // Test 3: Can we write to user_data table?
     try {
-      const r = await fetch(SUPABASE_REST + '/user_data', {
+      const r = await fetch(SUPABASE_REST + '/user_data?on_conflict=id', {
         method: 'POST',
         headers: sbHeaders({ 'Prefer': 'return=representation,resolution=merge-duplicates' }),
-        body: JSON.stringify({ id: currentUser, data: { test: true }, updated_at: new Date().toISOString() })
+        body: JSON.stringify({ id: currentUser, data: { test: true, ts: Date.now() }, updated_at: new Date().toISOString() })
       });
       const text = await r.text();
       out += 'Write user_data (status ' + r.status + '): ' + text.substring(0,200) + '\n';
