@@ -841,7 +841,7 @@ async function sbLoadData() {
     if (r.status === 401) {
       const ok = await sbRefreshToken();
       if (ok) { r = await doLoad(); }
-      else { clearSession(); accessToken=null; currentUser=null; return null; }
+      else { forceLogout("load-401"); return null; }
     }
     if (!r.ok) { dbLog && dbLog('Load error: ' + r.status); return null; }
     const rows = await r.json();
@@ -870,7 +870,7 @@ async function sbSaveData(state) {
     if (r.status === 401) {
       const ok = await sbRefreshToken();
       if (ok) { r = await doSave(); }
-      else { clearSession(); accessToken=null; currentUser=null; showSyncing(false); return; }
+      else { forceLogout("save-401"); showSyncing(false); return; }
     }
     if (!r.ok) {
       const t = await r.text();
@@ -905,6 +905,18 @@ function loadSession() {
 }
 function clearSession() {
   try { localStorage.removeItem('gc_session'); } catch(e) {}
+}
+
+function forceLogout(reason) {
+  dbLog && dbLog('Session ended: ' + (reason||'token expired'));
+  clearSession();
+  accessToken = null;
+  currentUser = null;
+  // Always show login screen
+  const ov = document.getElementById('auth-overlay');
+  if (ov) ov.style.display = 'flex';
+  // Show reason in auth form
+  if (reason) showAuthMsg && showAuthMsg('Your session expired. Please sign in again.', 'err');
 }
 
 // ── System prompt builder ─────────────────────────────────────
@@ -1577,6 +1589,31 @@ async function forceLoad() {
   }
 }
 
+// ── Periodic session check ───────────────────────────────────────────────────
+function startSessionWatch() {
+  // Check session validity every 4 minutes (tokens expire after ~60 min)
+  setInterval(async () => {
+    if (!accessToken || !currentUser) return;
+    try {
+      const r = await fetch(SUPABASE_AUTH + '/user', {
+        headers: sbHeaders()
+      });
+      if (r.status === 401) {
+        dbLog && dbLog('Session check: token expired, attempting refresh...');
+        const ok = await sbRefreshToken();
+        if (!ok) {
+          forceLogout('session-watch-401');
+        } else {
+          dbLog && dbLog('Session refreshed automatically');
+        }
+      }
+    } catch(e) {
+      // Network error — don't force logout, just wait for next check
+      dbLog && dbLog('Session check network error: ' + e.message);
+    }
+  }, 4 * 60 * 1000); // every 4 minutes
+}
+
 // Explicit window assignments so onclick attributes work in sandboxed contexts
 function _exposeAll() {
   window.nav               = nav;
@@ -1616,6 +1653,7 @@ function _exposeAll() {
   window.runDiagnostics    = runDiagnostics;
   window.forceSave         = forceSave;
   window.forceLoad         = forceLoad;
+  window.forceLogout       = forceLogout;
 }
 
 // ── Auth UI functions ────────────────────────────────────────────────────────
@@ -1678,13 +1716,13 @@ async function onSignedIn(token, userId, email, refreshToken) {
   if (cloud) {
     applyState(cloud);
   } else {
-    // First time — use local state or defaults
     const local = loadState();
     applyState(local || DEFAULT_STATE);
   }
-  // Hide auth overlay
   const overlay = document.getElementById('auth-overlay');
   if (overlay) overlay.style.display = 'none';
+  // Start watching session validity
+  startSessionWatch();
 }
 
 async function signOut() {
@@ -1780,9 +1818,10 @@ function _boot() {
       applyState(cloud || loadState() || DEFAULT_STATE);
       const ov = document.getElementById('auth-overlay');
       if (ov) ov.style.display = 'none';
+      startSessionWatch();
     }).catch(() => {
-      // Token may be expired — clear session and show login
-      clearSession();
+      // Token expired or invalid — force logout and show login screen
+      forceLogout('session-restore');
       applyState(loadState() || DEFAULT_STATE);
     });
   } else {
