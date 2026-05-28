@@ -1034,15 +1034,12 @@ function saveState(immediate) {
   try {
     const state = buildStateObject();
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
-    if (currentUser) {
+    if (currentUser && accessToken) {
+      clearTimeout(window._saveTimer);
       if (immediate) {
-        // Save right away for important actions
-        clearTimeout(window._saveTimer);
         sbSaveData(state);
       } else {
-        // Debounced for frequent updates like profile typing
-        clearTimeout(window._saveTimer);
-        window._saveTimer = setTimeout(() => sbSaveData(state), 1500);
+        window._saveTimer = setTimeout(() => sbSaveData(state), 800);
       }
     }
   } catch(e) { console.warn('Save failed:', e); }
@@ -1707,22 +1704,48 @@ async function signUp() {
 async function onSignedIn(token, userId, email, refreshToken) {
   accessToken = token;
   currentUser = userId;
-  saveSession(userId, token);
-  // Show user email in sidebar
+  saveSession(userId, token, email, refreshToken || '');
   const emailEl = document.getElementById('user-email-display');
-  if (emailEl) emailEl.textContent = email;
-  // Load cloud state
+  if (emailEl) emailEl.textContent = email || '';
   const cloud = await loadCloudState();
-  if (cloud) {
+  if (cloud && cloudHasData(cloud)) {
     applyState(cloud);
   } else {
     const local = loadState();
     applyState(local || DEFAULT_STATE);
+    if (local) {
+      dbLog && dbLog('No cloud data — pushing local data to cloud');
+      setTimeout(() => sbSaveData(buildStateObject()), 500);
+    }
   }
   const overlay = document.getElementById('auth-overlay');
   if (overlay) overlay.style.display = 'none';
-  // Start watching session validity
   startSessionWatch();
+}
+
+function cloudHasData(cloud) {
+  if (!cloud) return false;
+  return (cloud.gp && cloud.gp.some(p => p > 0))
+    || (cloud.jents && cloud.jents.length > 0)
+    || (cloud.books && cloud.books.length > 0)
+    || (cloud.skills && cloud.skills.length > 0)
+    || (cloud.habits && cloud.habits.length > 0)
+    || (cloud.pgoals && cloud.pgoals.length > 0)
+    || (cloud.streak && cloud.streak > 1);
+}
+function cloudHasData(cloud) {
+  // A cloud state is considered real if it has any actual user data
+  // (not just the default empty state)
+  if (!cloud) return false;
+  const hasGoals    = cloud.gp && cloud.gp.some(p => p > 0);
+  const hasJournal  = cloud.jents && cloud.jents.length > 0;
+  const hasBooks    = cloud.books && cloud.books.length > 0;
+  const hasSkills   = cloud.skills && cloud.skills.length > 0;
+  const hasHabits   = cloud.habits && cloud.habits.length > 0;
+  const hasPgoals   = cloud.pgoals && cloud.pgoals.length > 0;
+  const hasProfile  = cloud.profile && cloud.profile.fb; // has received feedback field filled
+  const hasStreak   = cloud.streak && cloud.streak > 1;
+  return hasGoals || hasJournal || hasBooks || hasSkills || hasHabits || hasPgoals || hasProfile || hasStreak;
 }
 
 async function signOut() {
@@ -1815,12 +1838,19 @@ function _boot() {
     const emailEl = document.getElementById('user-email-display');
     if (emailEl && session.email) emailEl.textContent = session.email;
     loadCloudState().then(cloud => {
-      applyState(cloud || loadState() || DEFAULT_STATE);
+      if (cloud && cloudHasData(cloud)) {
+        applyState(cloud);
+      } else {
+        const local = loadState();
+        applyState(local || DEFAULT_STATE);
+        if (local && currentUser) {
+          setTimeout(() => sbSaveData(buildStateObject()), 500);
+        }
+      }
       const ov = document.getElementById('auth-overlay');
       if (ov) ov.style.display = 'none';
       startSessionWatch();
     }).catch(() => {
-      // Token expired or invalid — force logout and show login screen
       forceLogout('session-restore');
       applyState(loadState() || DEFAULT_STATE);
     });
