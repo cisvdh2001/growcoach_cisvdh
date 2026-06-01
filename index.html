@@ -832,53 +832,99 @@ async function sbRefreshToken() {
 }
 
 async function sbLoadData() {
-  if (!accessToken || !currentUser) { dbLog && dbLog('sbLoadData skipped — not signed in'); return null; }
-  const doLoad = async () => fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=data', {
-    headers: sbHeaders({ 'Accept': 'application/json' })
-  });
-  try {
-    let r = await doLoad();
-    if (r.status === 401) {
-      const ok = await sbRefreshToken();
-      if (ok) { r = await doLoad(); }
-      else { forceLogout("load-401"); return null; }
-    }
-    if (!r.ok) { dbLog && dbLog('Load error: ' + r.status); return null; }
-    const rows = await r.json();
-    if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
-      dbLog && dbLog('Cloud load OK');
-      return rows[0].data;
-    }
-    dbLog && dbLog('Cloud load — no data yet');
+  if (!accessToken || !currentUser) {
+    dbLog && dbLog('Load skipped: not signed in');
     return null;
-  } catch(e) { dbLog && dbLog('Load exception: '+e.message); return null; }
+  }
+  try {
+    let r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=data,updated_at', {
+      headers: sbHeaders({ 'Accept': 'application/json' })
+    });
+
+    if (r.status === 401) {
+      dbLog && dbLog('Load got 401, refreshing token...');
+      const ok = await sbRefreshToken();
+      if (!ok) { forceLogout('load-401'); return null; }
+      r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=data,updated_at', {
+        headers: sbHeaders({ 'Accept': 'application/json' })
+      });
+    }
+
+    if (!r.ok) {
+      dbLog && dbLog('Load HTTP error: ' + r.status);
+      return null;
+    }
+
+    const rows = await r.json();
+    dbLog && dbLog('Load response: ' + JSON.stringify(rows).substring(0, 100));
+
+    if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
+      const d = rows[0].data;
+      dbLog && dbLog('Cloud data found: books=' + (d.books||[]).length + 
+        ' habits=' + (d.habits||[]).length + 
+        ' goals=' + (d.gp||[]).length +
+        ' updated=' + (rows[0].updated_at||'?').substring(0,16));
+      return d;
+    }
+    dbLog && dbLog('Cloud row exists but data is empty or missing');
+    return null;
+  } catch(e) {
+    dbLog && dbLog('Load exception: ' + e.message);
+    return null;
+  }
 }
 
 async function sbSaveData(state) {
-  if (!accessToken || !currentUser) { dbLog && dbLog('sbSaveData skipped — not signed in'); return; }
+  if (!accessToken || !currentUser) {
+    dbLog && dbLog('Save skipped: not signed in');
+    return;
+  }
   showSyncing(true);
-  const payload = JSON.stringify({ id: currentUser, data: state, updated_at: new Date().toISOString() });
-  const doSave = async () => fetch(SUPABASE_REST + '/user_data?on_conflict=id', {
-    method: 'POST',
-    headers: sbHeaders({
-      'Prefer': 'return=minimal,resolution=merge-duplicates'
-    }),
-    body: payload
-  });
-  try {
-    let r = await doSave();
+  const payload = { id: currentUser, data: state, updated_at: new Date().toISOString() };
+
+  const tryRequest = async (method, url, body) => {
+    const r = await fetch(url, {
+      method,
+      headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+      body: JSON.stringify(body)
+    });
+    // Handle token expiry
     if (r.status === 401) {
       const ok = await sbRefreshToken();
-      if (ok) { r = await doSave(); }
-      else { forceLogout("save-401"); showSyncing(false); return; }
+      if (!ok) { forceLogout('save-401'); return null; }
+      return await fetch(url, {
+        method,
+        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify(body)
+      });
     }
-    if (!r.ok) {
-      const t = await r.text();
-      dbLog && dbLog('Save error ' + r.status + ': ' + t.substring(0,200));
+    return r;
+  };
+
+  try {
+    // Step 1: Try PATCH (update existing row)
+    const patchUrl = SUPABASE_REST + '/user_data?id=eq.' + currentUser;
+    let r = await tryRequest('PATCH', patchUrl, { data: state, updated_at: payload.updated_at });
+    if (!r) { showSyncing(false); return; }
+
+    if (r.status === 404 || r.status === 406) {
+      // Row doesn't exist yet — INSERT
+      dbLog && dbLog('No existing row, inserting...');
+      r = await tryRequest('POST', SUPABASE_REST + '/user_data', payload);
+      if (!r) { showSyncing(false); return; }
+    }
+
+    if (r.ok || r.status === 204) {
+      dbLog && dbLog('Cloud save OK at ' + new Date().toLocaleTimeString());
+      localStorage.setItem('gc_last_save', new Date().toISOString());
+      updateSaveIndicator();
     } else {
-      dbLog && dbLog('Cloud save OK (' + r.status + ')');
+      const txt = await r.text();
+      dbLog && dbLog('Save failed ' + r.status + ': ' + txt.substring(0, 200));
     }
-  } catch(e) { dbLog && dbLog('Save exception: ' + e.message); }
+  } catch(e) {
+    dbLog && dbLog('Save exception: ' + e.message);
+  }
   showSyncing(false);
 }
 
@@ -887,6 +933,20 @@ function showSyncing(active) {
   if (!dot) return;
   dot.classList.add('show');
   dot.classList.toggle('syncing', active);
+}
+
+function updateSaveIndicator() {
+  const last = localStorage.getItem('gc_last_save');
+  if (!last) return;
+  const dot = document.getElementById('sync-dot');
+  if (dot) { dot.classList.add('show'); dot.classList.remove('syncing'); }
+  const emailEl = document.getElementById('user-email-display');
+  if (emailEl) {
+    const session = loadSession();
+    const d = new Date(last);
+    const timeStr = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    emailEl.textContent = (session&&session.email?session.email:'') + ' · saved ' + timeStr;
+  }
 }
 
 // Session persistence in localStorage
@@ -1512,6 +1572,8 @@ async function runDiagnostics() {
   const el = document.getElementById('debug-status');
   if (!el) return;
   let out = '';
+  const lastSave = localStorage.getItem('gc_last_save');
+  out += 'Last cloud save: ' + (lastSave ? new Date(lastSave).toLocaleString() : 'never') + '\n';
   out += 'SUPABASE_URL: ' + SUPABASE_URL + '\n';
   out += 'currentUser: ' + (currentUser || 'NOT SET') + '\n';
   out += 'accessToken: ' + (accessToken ? accessToken.substring(0,20) + '...' : 'NOT SET') + '\n';
@@ -1539,17 +1601,37 @@ async function runDiagnostics() {
       out += 'Read user_data FAILED: ' + e.message + '\n';
     }
 
-    // Test 3: Can we write to user_data table?
+    // Test 3: PATCH test (update existing row)
     try {
-      const r = await fetch(SUPABASE_REST + '/user_data?on_conflict=id', {
-        method: 'POST',
-        headers: sbHeaders({ 'Prefer': 'return=representation,resolution=merge-duplicates' }),
-        body: JSON.stringify({ id: currentUser, data: { test: true, ts: Date.now() }, updated_at: new Date().toISOString() })
+      const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser, {
+        method: 'PATCH',
+        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ updated_at: new Date().toISOString() })
       });
       const text = await r.text();
-      out += 'Write user_data (status ' + r.status + '): ' + text.substring(0,200) + '\n';
+      out += 'PATCH user_data (status ' + r.status + '): ' + (text||'(no body — success)') + '\n';
     } catch(e) {
-      out += 'Write user_data FAILED: ' + e.message + '\n';
+      out += 'PATCH user_data FAILED: ' + e.message + '\n';
+    }
+
+    // Test 4: Check what data is actually in the row
+    try {
+      const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=id,updated_at,data', {
+        headers: sbHeaders({ 'Accept': 'application/json' })
+      });
+      const rows = await r.json();
+      if (rows && rows.length > 0) {
+        const d = rows[0].data;
+        out += 'Data in cloud: books=' + (d&&d.books?d.books.length:0) +
+          ' habits=' + (d&&d.habits?d.habits.length:0) +
+          ' goals=' + (d&&d.gp?d.gp.length:0) +
+          ' journal=' + (d&&d.jents?d.jents.length:0) + '\n';
+        out += 'Last updated: ' + rows[0].updated_at + '\n';
+      } else {
+        out += 'No row found in user_data table\n';
+      }
+    } catch(e) {
+      out += 'Data check FAILED: ' + e.message + '\n';
     }
   } else {
     out += 'Skipping read/write tests — not signed in\n';
