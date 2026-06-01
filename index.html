@@ -883,18 +883,18 @@ async function sbSaveData(state) {
   showSyncing(true);
   const now = new Date().toISOString();
 
-  const doRequest = async (method, url, body) => {
-    const r = await fetch(url, {
+  const req = async (method, url, body) => {
+    let r = await fetch(url, {
       method,
-      headers: sbHeaders({ 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
+      headers: sbHeaders({ 'Prefer': 'return=minimal' }),
       body: JSON.stringify(body)
     });
     if (r.status === 401) {
       const ok = await sbRefreshToken();
       if (!ok) { forceLogout('save-401'); return null; }
-      return await fetch(url, {
+      r = await fetch(url, {
         method,
-        headers: sbHeaders({ 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
+        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
         body: JSON.stringify(body)
       });
     }
@@ -902,34 +902,38 @@ async function sbSaveData(state) {
   };
 
   try {
-    // Try PATCH first (update existing row)
-    let r = await doRequest('PATCH',
+    // Always try PATCH first (update if row exists)
+    let r = await req('PATCH',
       SUPABASE_REST + '/user_data?id=eq.' + currentUser,
       { data: state, updated_at: now }
     );
     if (!r) { showSyncing(false); return; }
 
-    // PATCH returns 204 on success, or empty 200 - if no rows matched it still returns 204
-    // We need to check if the row actually exists first
     if (r.status === 204 || r.status === 200) {
-      // Verify by reading back
+      // PATCH succeeded — but verify row actually exists (PostgREST returns 204 even with no match)
       const check = await fetch(
-        SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=updated_at',
+        SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=id',
         { headers: sbHeaders({ 'Accept': 'application/json' }) }
       );
       const rows = await check.json();
-      if (!rows || rows.length === 0) {
-        // Row didn't exist — need to INSERT
-        dbLog && dbLog('Row missing after PATCH, inserting...');
-        r = await doRequest('POST',
-          SUPABASE_REST + '/user_data',
+      if (!Array.isArray(rows) || rows.length === 0) {
+        // Row doesn't exist — INSERT
+        dbLog && dbLog('No row found, inserting...');
+        r = await req('POST', SUPABASE_REST + '/user_data',
           { id: currentUser, data: state, updated_at: now }
         );
-        if (!r) { showSyncing(false); return; }
+        if (r && r.status === 409) {
+          // Conflict — row appeared between check and insert, try PATCH again
+          dbLog && dbLog('409 conflict, retrying PATCH...');
+          r = await req('PATCH',
+            SUPABASE_REST + '/user_data?id=eq.' + currentUser,
+            { data: state, updated_at: now }
+          );
+        }
       }
     }
 
-    if (r && (r.ok || r.status === 204)) {
+    if (r && (r.ok || r.status === 204 || r.status === 201)) {
       dbLog && dbLog('Cloud save OK at ' + new Date().toLocaleTimeString());
       localStorage.setItem('gc_last_save', new Date().toISOString());
       updateSaveIndicator();
@@ -1669,25 +1673,49 @@ async function forceSave() {
 
 async function clearAndResave() {
   if (!currentUser || !accessToken) { dbLog('Not signed in'); return; }
-  dbLog('Deleting existing cloud row...');
-  try {
-    const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser, {
-      method: 'DELETE',
-      headers: sbHeaders()
-    });
-    dbLog('Delete status: ' + r.status);
-  } catch(e) { dbLog('Delete error: ' + e.message); }
-  dbLog('Re-inserting with current local data...');
   const state = buildStateObject();
-  const r2 = await fetch(SUPABASE_REST + '/user_data', {
-    method: 'POST',
+  dbLog('books=' + state.books.length + ' habits=' + state.habits.length +
+    ' goals=' + state.gp.length + ' journal=' + state.jents.length);
+
+  // First try PATCH to update existing row
+  dbLog('Trying PATCH update...');
+  let r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser, {
+    method: 'PATCH',
     headers: sbHeaders({ 'Prefer': 'return=minimal' }),
-    body: JSON.stringify({ id: currentUser, data: state, updated_at: new Date().toISOString() })
+    body: JSON.stringify({ data: state, updated_at: new Date().toISOString() })
   });
-  dbLog('Insert status: ' + r2.status + (r2.ok ? ' — SUCCESS' : ' — FAILED'));
-  if (r2.ok || r2.status === 201) {
+  dbLog('PATCH status: ' + r.status);
+
+  if (r.status === 204 || r.status === 200) {
+    // Verify it actually matched a row
+    const check = await fetch(
+      SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=id',
+      { headers: sbHeaders({ 'Accept': 'application/json' }) }
+    );
+    const rows = await check.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      // No row — try INSERT
+      dbLog('No existing row, inserting fresh...');
+      r = await fetch(SUPABASE_REST + '/user_data', {
+        method: 'POST',
+        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ id: currentUser, data: state, updated_at: new Date().toISOString() })
+      });
+      dbLog('INSERT status: ' + r.status + (r.ok || r.status===201 ? ' — SUCCESS' : ' — FAILED'));
+    } else {
+      dbLog('PATCH matched existing row — SUCCESS');
+    }
+  } else {
+    const txt = await r.text();
+    dbLog('PATCH failed ' + r.status + ': ' + txt.substring(0,150));
+    if (r.status === 403) {
+      dbLog('Permission denied. Run this SQL in Supabase: GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_data TO authenticated;');
+    }
+  }
+
+  if (r.ok || r.status === 204 || r.status === 201) {
     localStorage.setItem('gc_last_save', new Date().toISOString());
-    dbLog('books=' + state.books.length + ' habits=' + state.habits.length + ' goals=' + state.gp.length);
+    dbLog('Done! Run diagnostics to verify.');
   }
 }
 
