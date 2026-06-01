@@ -733,6 +733,7 @@ body{font-family:var(--f);font-size:15px;background:var(--b2);color:var(--t0);-w
           <button class="bpri" onclick="runDiagnostics()">Run diagnostics</button>
           <button class="bout" onclick="forceSave()">Force save to cloud</button>
           <button class="bout" onclick="forceLoad()">Force load from cloud</button>
+          <button class="bout" onclick="clearAndResave()" style="color:#791F1F;border-color:#F7C1C1">Clear cloud &amp; resave</button>
         </div>
         <div class="card" id="debug-log" style="font-family:monospace;font-size:11px;white-space:pre-wrap;line-height:1.6;color:var(--t1);margin-top:14px;max-height:300px;overflow-y:auto">Log will appear here...</div>
       </div>
@@ -880,21 +881,20 @@ async function sbSaveData(state) {
     return;
   }
   showSyncing(true);
-  const payload = { id: currentUser, data: state, updated_at: new Date().toISOString() };
+  const now = new Date().toISOString();
 
-  const tryRequest = async (method, url, body) => {
+  const doRequest = async (method, url, body) => {
     const r = await fetch(url, {
       method,
-      headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+      headers: sbHeaders({ 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
       body: JSON.stringify(body)
     });
-    // Handle token expiry
     if (r.status === 401) {
       const ok = await sbRefreshToken();
       if (!ok) { forceLogout('save-401'); return null; }
       return await fetch(url, {
         method,
-        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        headers: sbHeaders({ 'Prefer': 'return=minimal', 'Content-Type': 'application/json' }),
         body: JSON.stringify(body)
       });
     }
@@ -902,23 +902,38 @@ async function sbSaveData(state) {
   };
 
   try {
-    // Step 1: Try PATCH (update existing row)
-    const patchUrl = SUPABASE_REST + '/user_data?id=eq.' + currentUser;
-    let r = await tryRequest('PATCH', patchUrl, { data: state, updated_at: payload.updated_at });
+    // Try PATCH first (update existing row)
+    let r = await doRequest('PATCH',
+      SUPABASE_REST + '/user_data?id=eq.' + currentUser,
+      { data: state, updated_at: now }
+    );
     if (!r) { showSyncing(false); return; }
 
-    if (r.status === 404 || r.status === 406) {
-      // Row doesn't exist yet — INSERT
-      dbLog && dbLog('No existing row, inserting...');
-      r = await tryRequest('POST', SUPABASE_REST + '/user_data', payload);
-      if (!r) { showSyncing(false); return; }
+    // PATCH returns 204 on success, or empty 200 - if no rows matched it still returns 204
+    // We need to check if the row actually exists first
+    if (r.status === 204 || r.status === 200) {
+      // Verify by reading back
+      const check = await fetch(
+        SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=updated_at',
+        { headers: sbHeaders({ 'Accept': 'application/json' }) }
+      );
+      const rows = await check.json();
+      if (!rows || rows.length === 0) {
+        // Row didn't exist — need to INSERT
+        dbLog && dbLog('Row missing after PATCH, inserting...');
+        r = await doRequest('POST',
+          SUPABASE_REST + '/user_data',
+          { id: currentUser, data: state, updated_at: now }
+        );
+        if (!r) { showSyncing(false); return; }
+      }
     }
 
-    if (r.ok || r.status === 204) {
+    if (r && (r.ok || r.status === 204)) {
       dbLog && dbLog('Cloud save OK at ' + new Date().toLocaleTimeString());
       localStorage.setItem('gc_last_save', new Date().toISOString());
       updateSaveIndicator();
-    } else {
+    } else if (r) {
       const txt = await r.text();
       dbLog && dbLog('Save failed ' + r.status + ': ' + txt.substring(0, 200));
     }
@@ -1601,20 +1616,7 @@ async function runDiagnostics() {
       out += 'Read user_data FAILED: ' + e.message + '\n';
     }
 
-    // Test 3: PATCH test (update existing row)
-    try {
-      const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser, {
-        method: 'PATCH',
-        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({ updated_at: new Date().toISOString() })
-      });
-      const text = await r.text();
-      out += 'PATCH user_data (status ' + r.status + '): ' + (text||'(no body — success)') + '\n';
-    } catch(e) {
-      out += 'PATCH user_data FAILED: ' + e.message + '\n';
-    }
-
-    // Test 4: Check what data is actually in the row
+    // Test 3: Read full data row (non-destructive)
     try {
       const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser + '&select=id,updated_at,data', {
         headers: sbHeaders({ 'Accept': 'application/json' })
@@ -1622,13 +1624,18 @@ async function runDiagnostics() {
       const rows = await r.json();
       if (rows && rows.length > 0) {
         const d = rows[0].data;
-        out += 'Data in cloud: books=' + (d&&d.books?d.books.length:0) +
-          ' habits=' + (d&&d.habits?d.habits.length:0) +
-          ' goals=' + (d&&d.gp?d.gp.length:0) +
-          ' journal=' + (d&&d.jents?d.jents.length:0) + '\n';
-        out += 'Last updated: ' + rows[0].updated_at + '\n';
+        if (d) {
+          out += 'Data in cloud: books=' + (d.books?d.books.length:0) +
+            ' habits=' + (d.habits?d.habits.length:0) +
+            ' goals=' + (d.gp?d.gp.length:0) +
+            ' journal=' + (d.jents?d.jents.length:0) +
+            ' skills=' + (d.skills?d.skills.length:0) + '\n';
+          out += 'Last updated: ' + rows[0].updated_at + '\n';
+        } else {
+          out += 'Row exists but data column is empty\n';
+        }
       } else {
-        out += 'No row found in user_data table\n';
+        out += 'No row found — data has never been saved to cloud\n';
       }
     } catch(e) {
       out += 'Data check FAILED: ' + e.message + '\n';
@@ -1651,9 +1658,37 @@ async function runDiagnostics() {
 async function forceSave() {
   dbLog('Force saving to cloud...');
   const state = buildStateObject();
-  dbLog('State has ' + JSON.stringify(Object.keys(state)));
+  const size = JSON.stringify(state).length;
+  dbLog('State keys: ' + JSON.stringify(Object.keys(state)));
+  dbLog('Payload size: ' + size + ' chars');
+  dbLog('books=' + state.books.length + ' habits=' + state.habits.length + 
+    ' goals=' + state.gp.length + ' journal=' + state.jents.length);
   await sbSaveData(state);
   dbLog('Force save complete');
+}
+
+async function clearAndResave() {
+  if (!currentUser || !accessToken) { dbLog('Not signed in'); return; }
+  dbLog('Deleting existing cloud row...');
+  try {
+    const r = await fetch(SUPABASE_REST + '/user_data?id=eq.' + currentUser, {
+      method: 'DELETE',
+      headers: sbHeaders()
+    });
+    dbLog('Delete status: ' + r.status);
+  } catch(e) { dbLog('Delete error: ' + e.message); }
+  dbLog('Re-inserting with current local data...');
+  const state = buildStateObject();
+  const r2 = await fetch(SUPABASE_REST + '/user_data', {
+    method: 'POST',
+    headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+    body: JSON.stringify({ id: currentUser, data: state, updated_at: new Date().toISOString() })
+  });
+  dbLog('Insert status: ' + r2.status + (r2.ok ? ' — SUCCESS' : ' — FAILED'));
+  if (r2.ok || r2.status === 201) {
+    localStorage.setItem('gc_last_save', new Date().toISOString());
+    dbLog('books=' + state.books.length + ' habits=' + state.habits.length + ' goals=' + state.gp.length);
+  }
 }
 
 async function forceLoad() {
@@ -1733,6 +1768,7 @@ function _exposeAll() {
   window.forceSave         = forceSave;
   window.forceLoad         = forceLoad;
   window.forceLogout       = forceLogout;
+  window.clearAndResave    = clearAndResave;
 }
 
 // ── Auth UI functions ────────────────────────────────────────────────────────
@@ -1807,15 +1843,20 @@ async function onSignedIn(token, userId, email, refreshToken) {
 
 function cloudHasData(cloud) {
   if (!cloud) return false;
+  // Reject obviously invalid/test data
+  if (cloud.test !== undefined && Object.keys(cloud).length <= 2) return false;
+  // Must have the state structure
+  if (!cloud.gp && !cloud.jents && !cloud.books && !cloud.habits) return false;
+  // Check if any real data exists
   return (cloud.gp && cloud.gp.some(p => p > 0))
     || (cloud.jents && cloud.jents.length > 0)
     || (cloud.books && cloud.books.length > 0)
     || (cloud.skills && cloud.skills.length > 0)
     || (cloud.habits && cloud.habits.length > 0)
     || (cloud.pgoals && cloud.pgoals.length > 0)
-    || (cloud.streak && cloud.streak > 1);
-}
-function cloudHasData(cloud) {
+    || (cloud.streak && cloud.streak > 1)
+    || (cloud.profile && (cloud.profile.fb || cloud.profile.chal || cloud.profile.str));
+}function cloudHasData(cloud) {
   // A cloud state is considered real if it has any actual user data
   // (not just the default empty state)
   if (!cloud) return false;
